@@ -74,40 +74,43 @@ LFIT::Data binUp(const LFIT::Data& data, const double& xstart, const double& xen
     if(j == 0) start = 0;
     for(k=start; k<data.size() && data[k].time<x2; k++){
       if(data[k].time >= x1){
-	if(! data[k].bad){
+		if(! data[k].bad){
 	  
-	  if(weight == 'V'){
-	    w = 1.0/Subs::sqr(data[k].ferr);
-	  }else{
-	    w = 1.0;
-	  }
-	  
-	  sumey += Subs::sqr(w*data[k].ferr);
-	  sumx  += w*data[k].time;
-	  sumy  += w*data[k].flux;
-	  sumysq += w*data[k].flux*data[k].flux;
-	  sumw  += w;
-	  sumwsq+= w*w;
-	  np++;
-	}
+		  if(weight == 'V'){
+			w = 1.0/Subs::sqr(data[k].ferr);
+		  }else{
+			w = 1.0;
+		  }
+
+		  sumey += Subs::sqr(w*data[k].ferr);
+		  sumx  += w*data[k].time;
+		  sumy  += w*data[k].flux;
+		  sumysq += w*data[k].flux*data[k].flux;
+		  sumw  += w;
+		  sumwsq+= w*w;
+		  np++;
+		}
       }
     }
     start = k;
     
-    if(np >0){
-      // store point
-      datum.time = sumx/sumw;
-      datum.flux = sumy/sumw;
-      datum.expose = x2-x1;
-      //set yerr from scatter in bin
-      if(np>10){
-	  datum.ferr = sqrt(sumwsq*(sumysq-sumy*sumy/sumw)/sumw)/sumw;
-	}else{
-	datum.ferr   = sqrt(sumey)/sumw;
-      }
-      newdata.push_back(datum);
-    }
-    
+    if(np > 0){
+		// store point
+		datum.time = sumx/sumw;
+		datum.flux = sumy/sumw;
+		datum.expose = x2-x1;
+		//set yerr from scatter in bin
+		if(np>10){
+			datum.ferr = sqrt(sumwsq*(sumysq-sumy*sumy/sumw)/sumw)/sumw;
+		}else{
+			datum.ferr   = sqrt(sumey)/sumw;
+		}
+		if (datum.ferr != datum.ferr){
+			std::cout << datum.time << " " << datum.flux << " " << datum.ferr << " " << np << std::endl;
+			std::cout << sumey << " " << sumw << std::endl;
+		}
+		newdata.push_back(datum);
+    }    
   }
   return newdata;
 }

@@ -218,7 +218,7 @@ const LFIT::Data& comp,const int& fileNum,LFIT::Data& out){
 		
 		LFIT::Datum targtmp = targ[deRef[i]];
 		LFIT::Datum comptmp = comp[deRef[i]];
-					
+		
 		// divide by standard & convert to mags
 		double magTarg = -2.5*log10(targtmp.flux/comptmp.flux);
 		switch(targ.chip){
@@ -249,7 +249,7 @@ const LFIT::Data& comp,const int& fileNum,LFIT::Data& out){
 		
 		// correct errors
 		targtmp.ferr = targtmp.flux*fracErr;
-		
+
 		// now phase fold
 		double MJD0 = input.hjd0 - 2400000.5;
 		double phase = (targtmp.time - MJD0)/input.per;
@@ -513,7 +513,7 @@ bool LFIT::loadultracam(LFIT::Data& lcurve, int nccd, int naper, std::string fil
 	    tmp.bad=true;
 	    nbad++;
 	  }
-	  if(tmp.flux < 0.0){
+	  if(tmp.flux <= 0.0){
 	    tmp.bad = true;
 	  }
 	  if(sigma < 0){
@@ -523,7 +523,6 @@ bool LFIT::loadultracam(LFIT::Data& lcurve, int nccd, int naper, std::string fil
 	  }else if(worst <= 0){
 	    ngood++;
 	  }
-	  //std::cout << tmp.flux << ", "  << tmp.ferr << ", " << tmp.bad << std::endl;
 	  // push the datum onto appropriate Data object
 	  lcurve.push_back(tmp);
 	}else{
