@@ -6,6 +6,7 @@ import numpy
 import ppgplot as p
 import warnings
 warnings.filterwarnings("ignore")
+import matplotlib.pyplot as plt
 
 class Param:
     def __init__(self,shortString,longString,index):
@@ -13,30 +14,59 @@ class Param:
         self.longString = longString
         self.index = index
 
+# def plotMult(x,parsList,total,label):
+# 
+#     fitList = []
+#     ymin = 1.0e32
+#     ymax = -1.0e32
+#     for par in parsList:
+#         fitList.append(fitfunc(par,x))
+#         fitList[-1] /= fitList[-1].sum()
+#         ymin = min(ymin,fitList[-1].min())
+#         ymax = max(ymax,fitList[-1].max())
+#     total   /= total.sum()
+#     ymin = min(ymin,total.min())
+#     ymax = max(ymax,total.max())
+# 
+#     p.pgenv(x.min(),x.max(),ymin,ymax)
+#     colInd = 4
+#     for fit in fitList:
+#         p.pgsci(colInd)
+#         p.pgline(x,fit)
+#         colInd -= 1
+#     p.pgsci(1)
+#     p.pgline(x,total)
+#     p.pglab(label,'PDF','')
+		
 def plotMult(x,parsList,total,label):
 
-    fitList = []
-    ymin = 1.0e32
-    ymax = -1.0e32
-    for par in parsList:
-        fitList.append(fitfunc(par,x))
-        fitList[-1] /= fitList[-1].sum()
-        ymin = min(ymin,fitList[-1].min())
-        ymax = max(ymax,fitList[-1].max())
-    total   /= total.sum()
-    ymin = min(ymin,total.min())
-    ymax = max(ymax,total.max())
+	rowIndex = plotMult.axindex % 5
+	colIndex = int(numpy.floor(plotMult.axindex / 5))
+	axis = plotMult.axs[rowIndex,colIndex]
+	fitList = []
+	ymin = 1.0e32
+	ymax = -1.0e32
+	for par in parsList:
+		fitList.append(fitfunc(par,x))
+		fitList[-1] /= fitList[-1].sum()
+		ymin = min(ymin,fitList[-1].min())
+		ymax = max(ymax,fitList[-1].max())
+	total   /= total.sum()
+	ymin = min(ymin,total.min())
+	ymax = max(ymax,total.max())
+	cols = ['r','g','b']
+	for ifit, fit in enumerate(fitList):
+		axis.plot(x,fit,cols[ifit])
+	axis.plot(x,total,'k')
+	axis.text(0.95,0.8,label,transform=axis.transAxes,horizontalalignment='right')
+	axis.yaxis.set_ticklabels([])
+	plotMult.axindex += 1
 
-    p.pgenv(x.min(),x.max(),ymin,ymax)
-    colInd = 4
-    for fit in fitList:
-        p.pgsci(colInd)
-        p.pgline(x,fit)
-        colInd -= 1
-    p.pgsci(1)
-    p.pgline(x,total)
-    p.pglab(label,'PDF','')
-
+plotMult.fig, plotMult.axs = plt.subplots(5,2)
+plotMult.fig.delaxes(plotMult.axs[4,1])
+plt.subplots_adjust(wspace=0.08)
+plotMult.axindex = 0
+    
 def plot(array,label,params):
     (y,bins) = numpy.histogram(array,bins=50,normed=True)
     x = 0.5*(bins[:-1] + bins[1:])
@@ -97,23 +127,32 @@ def getStats(array,shortLabel):
     print "%s = %.8f + %.8f - %.8f" % (shortLabel, mode, conflim[1]-mode, mode-conflim[0])
 
 if __name__ == "__main__":
-    
     fitfunc = lambda p, x: p[3]*numpy.exp( -(x-p[0])**2/2.0/p[1] ) * (1+ erf(p[2]*(x-p[0])/numpy.sqrt(p[1]*2)) )
     errfunc = lambda p, x, y: y - fitfunc(p, x)
-    p.pgopen('?')
-    p.pgsubp(2,5)
-    p.pgslw(2)
-    p.pgsch(3)
 
-    paramList = [Param('q','Mass Ratio (q)',0),
-                 Param('m1','M\\d1\\u (M\\d\\(2281)\\u)',1),
-                 Param('r1','R\\d1\\u (R\\d\\(2281)\\u)',2),
-                 Param('m2','M\\d2\\u (M\\d\\(2281)\\u)',3),
-                 Param('r2','R\\d2\\u (R\\d\\(2281)\\u)',4),
-                 Param('i','Inclination',8),
-                 Param('a','Binary Separation (R\\d\\(2281)\\u)',5),
-                 Param('kw','K\\d1\\u (km s\\u-1\\d)',6),
-                 Param('kr','K\\d2\\u (km s\\u-1\\d)',7)]
+#     p.pgopen('?')
+#     p.pgsubp(2,5)
+#     p.pgslw(2)
+#     p.pgsch(3)
+
+#     paramList = [Param('q','Mass Ratio (q)',0),
+#                  Param('m1','M\\d1\\u (M\\d\\(2281)\\u)',1),
+#                  Param('r1','R\\d1\\u (R\\d\\(2281)\\u)',2),
+#                  Param('m2','M\\d2\\u (M\\d\\(2281)\\u)',3),
+#                  Param('r2','R\\d2\\u (R\\d\\(2281)\\u)',4),
+#                  Param('i','Inclination',8),
+#                  Param('a','Binary Separation (R\\d\\(2281)\\u)',5),
+#                  Param('kw','K\\d1\\u (km s\\u-1\\d)',6),
+#                  Param('kr','K\\d2\\u (km s\\u-1\\d)',7)]
+    paramList = [Param('q',r'${\rm Mass\ Ratio\ } (q)$',0),
+                 Param('m1',r'$M_w (M_{\odot})$',1),
+                 Param('r1',r'$R_w (R_{\odot})$',2),
+                 Param('m2',r'$M_d (M_{\odot})$',3),
+                 Param('r2',r'$R_d (R_{\odot})$',4),
+                 Param('i',r'${\rm Inclination\ (deg)}$',8),
+                 Param('a',r'${\rm Separation\ } (R_{\odot})$',5),
+                 Param('kw',r'$K_w ({\rm km\ s}^{-1})$',6),
+                 Param('kr',r'$K_d ({\rm km\ s}^{-1})$',7)]
 
     while True:
         mode = raw_input('(S)ingle dataset or (M)ultiple datasets? ')
@@ -132,7 +171,7 @@ if __name__ == "__main__":
             getStats(array,param.shortString)
     else:
         dataList = []
-        colours = ['blu','grn','red']
+        colours = ['red','grn','blu']
         numSets = 0
         numSets = int(raw_input('How many datasets to combine? '))
         files = []
@@ -140,7 +179,7 @@ if __name__ == "__main__":
             files.append( raw_input('Give data file containing parameter samples for ' + colours[i] + ' data: ') )
 
         for i in range(numSets):
-            dataList.append(asciidata.open(files[i]))
+            dataList.append(numpy.loadtxt(files[i]))
 
         for param in paramList:
             parsList = []
@@ -148,7 +187,7 @@ if __name__ == "__main__":
             minX = 1.0e32
             maxX = -1.0e32
             for i in range(numSets):
-                array = numpy.array(dataList[i][param.index].tonumarray(),dtype='float64')
+                array = numpy.array(dataList[i][:,param.index],dtype='float64')
                 minX = min(minX,array.min())
                 maxX = max(maxX,array.max())
                 parsList.append(fitSkewedGaussian(array))
@@ -162,6 +201,7 @@ if __name__ == "__main__":
             else:
                 plotMult(x,[parsList[0],parsList[1],parsList[2]],result,param.longString)
             getStatsPDF(x,result,param.shortString)
+    plt.show()
     p.pgclos()
 
 

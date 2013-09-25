@@ -324,7 +324,7 @@ int main(void) {
     // plot colours
     Subs::Array1D<float> bergUminG(u), bergGminR(g);
     bergUminG -= g; bergGminR -= red[redKey];
-    plot.open("/xs");
+    plot.open("?");
     cpgsch(1.5);
     cpgslw(2);
     cpgscf(2);
