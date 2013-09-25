@@ -672,7 +672,7 @@ void mcmc(const std::vector<std::string>& args, LFIT::Params& params,
     }
   }
   // set final covariance from last 15000 steps of burnIn chains (or full length)
-  int nsteps = std::max(14999,iburn-1);
+  int nsteps = std::min(14999,iburn-1);
   burnIn.updateCovar(nsteps);
   myfile << "Finished burn-in phase" << std::endl;
   // end progress bar
