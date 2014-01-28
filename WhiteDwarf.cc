@@ -212,7 +212,7 @@ int LFIT::WhiteDwarf::circfit(const double& q,
         return 1;
     }
     
-    // ok. easy cases done. from here on in it's Keith Horne magic.
+    // ok. easy cases done. from here on in it's Tom Marsh magic.
     // don't ask me.....
     double a1 = -alpha;
     double a2 =  alpha;

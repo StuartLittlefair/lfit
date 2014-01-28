@@ -3,43 +3,23 @@ from scipy.special import erf
 from scipy.stats import skew
 import scipy.stats
 import numpy
-import ppgplot as p
-import warnings
-warnings.filterwarnings("ignore")
 import matplotlib.pyplot as plt
 
+def logg(m,r):
+	MSUN = 1.9891e+30
+	RSUN = 695508000.0
+	G    = 6.67384e-11
+	m = m*MSUN*1000
+	r = r*RSUN*100
+	return np.log10(G*1.0e3*m/r/r)
+	
 class Param:
     def __init__(self,shortString,longString,index):
         self.shortString = shortString
         self.longString = longString
         self.index = index
-
-# def plotMult(x,parsList,total,label):
-# 
-#     fitList = []
-#     ymin = 1.0e32
-#     ymax = -1.0e32
-#     for par in parsList:
-#         fitList.append(fitfunc(par,x))
-#         fitList[-1] /= fitList[-1].sum()
-#         ymin = min(ymin,fitList[-1].min())
-#         ymax = max(ymax,fitList[-1].max())
-#     total   /= total.sum()
-#     ymin = min(ymin,total.min())
-#     ymax = max(ymax,total.max())
-# 
-#     p.pgenv(x.min(),x.max(),ymin,ymax)
-#     colInd = 4
-#     for fit in fitList:
-#         p.pgsci(colInd)
-#         p.pgline(x,fit)
-#         colInd -= 1
-#     p.pgsci(1)
-#     p.pgline(x,total)
-#     p.pglab(label,'PDF','')
 		
 def plotMult(x,parsList,total,label):
-
 	rowIndex = plotMult.axindex % 5
 	colIndex = int(numpy.floor(plotMult.axindex / 5))
 	axis = plotMult.axs[rowIndex,colIndex]
@@ -61,22 +41,31 @@ def plotMult(x,parsList,total,label):
 	axis.text(0.95,0.8,label,transform=axis.transAxes,horizontalalignment='right')
 	axis.yaxis.set_ticklabels([])
 	plotMult.axindex += 1
-
+# add fig, axs objects to plotMult function for plot incrementing
 plotMult.fig, plotMult.axs = plt.subplots(5,2)
 plotMult.fig.delaxes(plotMult.axs[4,1])
 plt.subplots_adjust(wspace=0.08)
 plotMult.axindex = 0
     
 def plot(array,label,params):
-    (y,bins) = numpy.histogram(array,bins=50,normed=True)
-    x = 0.5*(bins[:-1] + bins[1:])
-    y /= float(len(array))
-    maxloc = y.argmax()
-    yFit = fitfunc(params,x)
-    p.pgenv(x.min(),x.max(),y.min(),y.max())
-    p.pgline(x,yFit)
-    p.pgbin(x,y,True)
-    p.pglab(label,'PDF','')
+	(y,bins) = numpy.histogram(array,bins=50,normed=True)
+	x = 0.5*(bins[:-1] + bins[1:])
+	y /= float(len(array))
+	maxloc = y.argmax()
+	yFit = fitfunc(params,x)
+	
+	rowIndex = plot.axindex % 5
+	colIndex = int(numpy.floor(plot.axindex / 5))
+	axis = plot.axs[rowIndex,colIndex]
+	axis.plot(x,yFit,'k')
+	axis.step(x,y,where='mid',color='k')
+	axis.text(0.95,0.8,label,transform=axis.transAxes,horizontalalignment='right')
+	axis.yaxis.set_ticklabels([])
+	plot.axindex += 1
+plot.fig, plot.axs = plt.subplots(5,2)
+plot.fig.delaxes(plot.axs[4,1])
+plt.subplots_adjust(wspace=0.08)
+plot.axindex = 0
 
 def fitSkewedGaussian(array):
     (y,bins) = numpy.histogram(array,bins=50,normed=True)
@@ -130,20 +119,6 @@ if __name__ == "__main__":
     fitfunc = lambda p, x: p[3]*numpy.exp( -(x-p[0])**2/2.0/p[1] ) * (1+ erf(p[2]*(x-p[0])/numpy.sqrt(p[1]*2)) )
     errfunc = lambda p, x, y: y - fitfunc(p, x)
 
-#     p.pgopen('?')
-#     p.pgsubp(2,5)
-#     p.pgslw(2)
-#     p.pgsch(3)
-
-#     paramList = [Param('q','Mass Ratio (q)',0),
-#                  Param('m1','M\\d1\\u (M\\d\\(2281)\\u)',1),
-#                  Param('r1','R\\d1\\u (R\\d\\(2281)\\u)',2),
-#                  Param('m2','M\\d2\\u (M\\d\\(2281)\\u)',3),
-#                  Param('r2','R\\d2\\u (R\\d\\(2281)\\u)',4),
-#                  Param('i','Inclination',8),
-#                  Param('a','Binary Separation (R\\d\\(2281)\\u)',5),
-#                  Param('kw','K\\d1\\u (km s\\u-1\\d)',6),
-#                  Param('kr','K\\d2\\u (km s\\u-1\\d)',7)]
     paramList = [Param('q',r'${\rm Mass\ Ratio\ } (q)$',0),
                  Param('m1',r'$M_w (M_{\odot})$',1),
                  Param('r1',r'$R_w (R_{\odot})$',2),
@@ -169,6 +144,7 @@ if __name__ == "__main__":
             array=dataIn[:,param.index]
             plot(array,param.longString,fitSkewedGaussian(array))
             getStats(array,param.shortString)
+        plt.close(plotMult.fig)
     else:
         dataList = []
         colours = ['red','grn','blu']
@@ -201,8 +177,8 @@ if __name__ == "__main__":
             else:
                 plotMult(x,[parsList[0],parsList[1],parsList[2]],result,param.longString)
             getStatsPDF(x,result,param.shortString)
+        plt.close(plot.fig)
     plt.show()
-    p.pgclos()
 
 
 
