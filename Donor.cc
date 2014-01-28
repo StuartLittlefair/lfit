@@ -1,11 +1,11 @@
 #include <cmath>
 #include <string>
-#include "trm_subs.h"
-#include "trm_array1d.h"
-#include "trm_vec3.h"
-#include "trm_roche.h"
+#include "trm/subs.h"
+#include "trm/array1d.h"
+#include "trm/vec3.h"
+#include "trm/roche.h"
 #include "Donor.h"
-#include "trm_constants.h"
+#include "trm/constants.h"
 #include "geometry.h"
 
 std::istream& LFIT::operator>>(std::istream& s, const DonorEl& el){

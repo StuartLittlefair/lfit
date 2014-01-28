@@ -6,10 +6,10 @@
  *  Copyright 2009 University of Sheffield. All rights reserved.
  *
  */
-#include "trm_subs.h"
-#include "trm_array1d.h"
-#include "trm_array2d.h"
-#include "trm_input.h"
+#include "trm/subs.h"
+#include "trm/array1d.h"
+#include "trm/array2d.h"
+#include "trm/input.h"
 #include "lfit.h"
 #include <cfloat>
 #include <climits>

@@ -3,7 +3,7 @@
 #include <fstream>
 #include <sstream>
 #include <string>
-#include "trm_roche.h"
+#include "trm/roche.h"
 
 using namespace std;
 

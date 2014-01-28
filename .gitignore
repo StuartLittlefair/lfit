@@ -14,3 +14,5 @@ params/stellar_calcs
 params/wd_params
 lfit
 discEclipse
+*.pyc
+*.a

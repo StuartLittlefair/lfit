@@ -2,7 +2,7 @@
 #include <string>
 #include <readline/readline.h>
 #include <readline/history.h>
-#include "trm_subs.h"
+#include "trm/subs.h"
 #include "lfit.h"
 
 using namespace std;

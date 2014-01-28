@@ -8,8 +8,8 @@
  */
 #include <cfloat>
 #include<climits>
-#include "trm_subs.h"
-#include "trm_input.h"
+#include "trm/subs.h"
+#include "trm/input.h"
 #include "lfit.h"
 
 

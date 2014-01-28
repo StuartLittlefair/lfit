@@ -6,7 +6,7 @@
  *  Copyright 2008 University of Sheffield. All rights reserved.
  *
  */
-#include "trm_subs.h"
+#include "trm/subs.h"
 #include "lfit.h"
 
 using namespace std;

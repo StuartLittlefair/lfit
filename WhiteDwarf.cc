@@ -9,11 +9,11 @@
 #include "WhiteDwarf.h"
 #include <cmath>
 #include <string>
-#include "trm_subs.h"
-#include "trm_vec3.h"
-#include "trm_roche.h"
-#include "trm_constants.h"
-#include "trm_format.h"
+#include "trm/subs.h"
+#include "trm/vec3.h"
+#include "trm/roche.h"
+#include "trm/constants.h"
+#include "trm/format.h"
 
 /*
  fits circle through three critical points to approximate

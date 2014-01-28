@@ -1,5 +1,5 @@
-#include "trm_subs.h"
-#include "trm_array2d.h"
+#include "trm/subs.h"
+#include "trm/array2d.h"
 
 #include <gsl/gsl_math.h>
 #include <gsl/gsl_errno.h>

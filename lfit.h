@@ -13,12 +13,12 @@
 #include <string>
 #include <vector>
 #include <unistd.h>
-#include "trm_subs.h"
-#include "trm_array1d.h"
-#include "trm_array2d.h"
-#include "trm_plot.h"
+#include "trm/subs.h"
+#include "trm/array1d.h"
+#include "trm/array2d.h"
+#include "trm/plot.h"
 #include "lultracam.h"
-#include "trm_format.h"
+#include "trm/format.h"
 #include "WhiteDwarf.h"
 #include "BrightSpot.h"
 #include "Disc.h"

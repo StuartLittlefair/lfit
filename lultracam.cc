@@ -10,13 +10,13 @@
 #include <cfloat>
 #include <string>
 #include "lultracam.h"
-#include "trm_subs.h"
-#include "trm_input.h"
-#include "trm_array1d.h"
-#include "trm_plot.h"
-#include "trm_telescope.h"
-#include "trm_position.h"
-#include "trm_format.h"
+#include "trm/subs.h"
+#include "trm/input.h"
+#include "trm/array1d.h"
+#include "trm/plot.h"
+#include "trm/telescope.h"
+#include "trm/position.h"
+#include "trm/format.h"
 
 void LFIT::split_on(const std::string& str, const std::string& delim,
               std::string& str1, std::string& str2){

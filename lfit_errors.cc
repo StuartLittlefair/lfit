@@ -10,9 +10,9 @@
 #include<climits>
 
 #include "lfit.h"
-#include "trm_subs.h"
-#include "trm_array1d.h"
-#include "trm_input.h"
+#include "trm/subs.h"
+#include "trm/array1d.h"
+#include "trm/input.h"
 
 using namespace std;
 

@@ -11,9 +11,9 @@
 #include <map>
 #include <string>
 #include <vector>
-#include "trm_subs.h"
-#include "trm_position.h"
-#include "trm_telescope.h"
+#include "trm/subs.h"
+#include "trm/position.h"
+#include "trm/telescope.h"
 
 namespace LFIT{
     

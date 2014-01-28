@@ -2,7 +2,7 @@
 #include <string>
 #include <readline/readline.h>
 #include <readline/history.h>
-#include "trm_subs.h"
+#include "trm/subs.h"
 #include "lfit.h"
 
 double get_delta_phi(LFIT::Disc disc, double q, double incl){

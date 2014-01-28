@@ -6,9 +6,9 @@
  *  Copyright 2008 University of Sheffield. All rights reserved.
  *
  */
-#include "trm_subs.h"
-#include "trm_vec3.h"
-#include "trm_roche.h"
+#include "trm/subs.h"
+#include "trm/vec3.h"
+#include "trm/roche.h"
 
 double finddeg(const double& q, const double& dphi){
 	

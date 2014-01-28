@@ -2,12 +2,12 @@
 #include <iomanip>
 #include <fstream>
 #include <sstream>
-#include "trm_subs.h"
-#include "trm_buffer2d.h"
-#include "trm_array1d.h"
-#include "trm_plot.h"
-#include "trm_constants.h"
-#include "trm_roche.h"
+#include "trm/subs.h"
+#include "trm/buffer2d.h"
+#include "trm/array1d.h"
+#include "trm/plot.h"
+#include "trm/constants.h"
+#include "trm/roche.h"
 
 using namespace std;
 
