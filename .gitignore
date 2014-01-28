@@ -1,0 +1,16 @@
+.DS_Store
+*.txt
+*.log
+*.ps
+*.out
+params/colourevo
+params/convert
+params/incl
+params/nauenberg
+params/newParams
+params/newParams_safe
+params/params
+params/stellar_calcs
+params/wd_params
+lfit
+discEclipse

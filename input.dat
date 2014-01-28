@@ -1,0 +1,30 @@
+Telescope = NTT
+Co-ordinates = 23 54 20.4 -47 00 20.0 2000.0
+#
+# how many logfiles to read in?   
+#
+
+nfiles  = 1
+format  = UCAM
+ 
+#
+# for each logfile need, name, filter in rband, target aperture, comp apeture
+# r-band extinction co-eff, comparison flux in each filter
+#
+
+file1    = /Users/sl/code/c++/lfit/newtest.log
+redfilter1   = r
+targap1    = 1
+compap1  = 2
+rext1     = 0.065
+compiflux1  = 15.433
+compgflux1 = 15.910      
+compuflux1 = 17.125
+
+
+#
+hjd0 = 2454261.883894
+period = 0.065550255
+xmin = 0.5
+xmax = 1.5
+
