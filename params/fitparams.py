@@ -6,41 +6,41 @@ import numpy
 import matplotlib.pyplot as plt
 
 def logg(m,r):
-	MSUN = 1.9891e+30
-	RSUN = 695508000.0
-	G    = 6.67384e-11
-	m = m*MSUN*1000
-	r = r*RSUN*100
-	return np.log10(G*1.0e3*m/r/r)
-	
+    MSUN = 1.9891e+30
+    RSUN = 695508000.0
+    G    = 6.67384e-11
+    m = m*MSUN*1000
+    r = r*RSUN*100
+    return numpy.log10(G*1.0e3*m/r/r)
+    
 class Param:
     def __init__(self,shortString,longString,index):
         self.shortString = shortString
         self.longString = longString
         self.index = index
-		
+        
 def plotMult(x,parsList,total,label):
-	rowIndex = plotMult.axindex % 5
-	colIndex = int(numpy.floor(plotMult.axindex / 5))
-	axis = plotMult.axs[rowIndex,colIndex]
-	fitList = []
-	ymin = 1.0e32
-	ymax = -1.0e32
-	for par in parsList:
-		fitList.append(fitfunc(par,x))
-		fitList[-1] /= fitList[-1].sum()
-		ymin = min(ymin,fitList[-1].min())
-		ymax = max(ymax,fitList[-1].max())
-	total   /= total.sum()
-	ymin = min(ymin,total.min())
-	ymax = max(ymax,total.max())
-	cols = ['r','g','b']
-	for ifit, fit in enumerate(fitList):
-		axis.plot(x,fit,cols[ifit])
-	axis.plot(x,total,'k')
-	axis.text(0.95,0.8,label,transform=axis.transAxes,horizontalalignment='right')
-	axis.yaxis.set_ticklabels([])
-	plotMult.axindex += 1
+    rowIndex = plotMult.axindex % 5
+    colIndex = int(numpy.floor(plotMult.axindex / 5))
+    axis = plotMult.axs[rowIndex,colIndex]
+    fitList = []
+    ymin = 1.0e32
+    ymax = -1.0e32
+    for par in parsList:
+        fitList.append(fitfunc(par,x))
+        fitList[-1] /= fitList[-1].sum()
+        ymin = min(ymin,fitList[-1].min())
+        ymax = max(ymax,fitList[-1].max())
+    total   /= total.sum()
+    ymin = min(ymin,total.min())
+    ymax = max(ymax,total.max())
+    cols = ['r','g','b']
+    for ifit, fit in enumerate(fitList):
+        axis.plot(x,fit,cols[ifit])
+    axis.plot(x,total,'k')
+    axis.text(0.95,0.8,label,transform=axis.transAxes,horizontalalignment='right')
+    axis.yaxis.set_ticklabels([])
+    plotMult.axindex += 1
 # add fig, axs objects to plotMult function for plot incrementing
 plotMult.fig, plotMult.axs = plt.subplots(5,2)
 plotMult.fig.delaxes(plotMult.axs[4,1])
@@ -48,20 +48,20 @@ plt.subplots_adjust(wspace=0.08)
 plotMult.axindex = 0
     
 def plot(array,label,params):
-	(y,bins) = numpy.histogram(array,bins=50,normed=True)
-	x = 0.5*(bins[:-1] + bins[1:])
-	y /= float(len(array))
-	maxloc = y.argmax()
-	yFit = fitfunc(params,x)
-	
-	rowIndex = plot.axindex % 5
-	colIndex = int(numpy.floor(plot.axindex / 5))
-	axis = plot.axs[rowIndex,colIndex]
-	axis.plot(x,yFit,'k')
-	axis.step(x,y,where='mid',color='k')
-	axis.text(0.95,0.8,label,transform=axis.transAxes,horizontalalignment='right')
-	axis.yaxis.set_ticklabels([])
-	plot.axindex += 1
+    (y,bins) = numpy.histogram(array,bins=50,normed=True)
+    x = 0.5*(bins[:-1] + bins[1:])
+    y /= float(len(array))
+    maxloc = y.argmax()
+    yFit = fitfunc(params,x)
+    
+    rowIndex = plot.axindex % 5
+    colIndex = int(numpy.floor(plot.axindex / 5))
+    axis = plot.axs[rowIndex,colIndex]
+    axis.plot(x,yFit,'k')
+    axis.step(x,y,where='mid',color='k')
+    axis.text(0.95,0.8,label,transform=axis.transAxes,horizontalalignment='right')
+    axis.yaxis.set_ticklabels([])
+    plot.axindex += 1
 plot.fig, plot.axs = plt.subplots(5,2)
 plot.fig.delaxes(plot.axs[4,1])
 plt.subplots_adjust(wspace=0.08)
@@ -127,7 +127,8 @@ if __name__ == "__main__":
                  Param('i',r'${\rm Inclination\ (deg)}$',8),
                  Param('a',r'${\rm Separation\ } (R_{\odot})$',5),
                  Param('kw',r'$K_w ({\rm km\ s}^{-1})$',6),
-                 Param('kr',r'$K_d ({\rm km\ s}^{-1})$',7)]
+                 Param('kr',r'$K_d ({\rm km\ s}^{-1})$',7),
+         Param('logg',r'${\rm log} g$',99)]
 
     while True:
         mode = raw_input('(S)ingle dataset or (M)ultiple datasets? ')
@@ -141,10 +142,15 @@ if __name__ == "__main__":
         asciiFile = raw_input('Give data file containing parameter samples: ')
         dataIn = numpy.loadtxt(asciiFile)
         for param in paramList:
-            array=dataIn[:,param.index]
+            if param.index > 10:
+                continue
+            array=dataIn[:,param.index]         
+            pars = fitSkewedGaussian(array)
+            x = numpy.linspace(array.min(),array.max(),1000)
+            result = fitfunc(pars,x)
+            getStatsPDF(x,result,param.shortString)
             plot(array,param.longString,fitSkewedGaussian(array))
-            getStats(array,param.shortString)
-        plt.close(plotMult.fig)
+        #plt.close(plotMult.fig)
     else:
         dataList = []
         colours = ['red','grn','blu']
@@ -163,7 +169,12 @@ if __name__ == "__main__":
             minX = 1.0e32
             maxX = -1.0e32
             for i in range(numSets):
-                array = numpy.array(dataList[i][:,param.index],dtype='float64')
+                if param.index < 10:
+                    array = numpy.array(dataList[i][:,param.index],dtype='float64')
+                else:
+                    m = numpy.array(dataList[i][:,paramList[1].index],dtype='float64')
+                    r = numpy.array(dataList[i][:,paramList[2].index],dtype='float64')
+                    array = logg(m,r)           
                 minX = min(minX,array.min())
                 maxX = max(maxX,array.max())
                 parsList.append(fitSkewedGaussian(array))
@@ -177,6 +188,9 @@ if __name__ == "__main__":
             else:
                 plotMult(x,[parsList[0],parsList[1],parsList[2]],result,param.longString)
             getStatsPDF(x,result,param.shortString)
+
+
+
         plt.close(plot.fig)
     plt.show()
 

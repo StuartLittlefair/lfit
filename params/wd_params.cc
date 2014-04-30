@@ -273,7 +273,7 @@ int main(void) {
     red["i"] = i;
     red["z"] = z;
 
-    float up, uperr, gp, gperr, rp, rperr;
+    float up, uperr, gp, gperr, rp, rperr, av;
     cout << "Give u' band flux and err: ";
     cin >> up >> uperr;
     cout << "Give g' band flux and err: ";
@@ -285,23 +285,25 @@ int main(void) {
       cout << "which band in red? ";
       cin >> reply;
       if(Subs::toupper(reply) == "R"){
-	cout << "Give r' band flux and err: ";
-	cin >> rp >> rperr;
-	needBand = false;
-	redKey = "r";
+        cout << "Give r' band flux and err: ";
+        cin >> rp >> rperr;
+        needBand = false;
+        redKey = "r";
       }else if(Subs::toupper(reply) == "I"){
-	cout << "Give i' band flux and err: ";
-	cin >> rp >> rperr;
-	needBand = false;
-	redKey="i";
+        cout << "Give i' band flux and err: ";
+        cin >> rp >> rperr;
+        needBand = false;
+        redKey="i";
       }else if(Subs::toupper(reply) == "Z"){
-	cout << "Give z' band flux and err: ";
-	cin >> rp >> rperr;
-	needBand = false;
-	redKey="z";
+        cout << "Give z' band flux and err: ";
+        cin >> rp >> rperr;
+        needBand = false;
+        redKey="z";
       }
       if(needBand){cout << "please enter r, i or z... " << endl;}
     }
+    cout << "Give extinction (Av): ";
+    cin >> av;
     // convert to magnitudes
     uperr = abs(-log10((up+0.01*up+uperr)/3631.0/1000.0)/0.4 
 		+ log10((up-0.01*up-uperr)/3631.0/1000.0)/0.4)/2.0; 
@@ -341,6 +343,20 @@ int main(void) {
     cpgpt(1,&uming,&gminr,4);
     cpgerr1(5,uming,gminr,del_uming,0.2);
     cpgerr1(6,uming,gminr,del_gminr,0.2);
+    // plot de-reddening line
+    float umingprime, gminrprime;
+    float ebv = av/3.1;
+    float au = ebv*5.155;
+    float ag = ebv*3.793;
+    float ar;
+    if (redKey == "r"){ar = 2.751*ebv;}
+    if (redKey == "i"){ar = 2.086*ebv;}
+    if (redKey == "z"){ar = 1.479*ebv;}
+    // de-reddened colours
+    umingprime = uming + ag - au;
+    gminrprime = gminr + ar - ag;
+    cpgsch(0.5);
+    cpgarro(uming,gminr,umingprime,gminrprime);
     plot.close();
 
     Subs::Array1D<float> chisq(teff.size()-1), tstore, gstore;
@@ -355,7 +371,7 @@ int main(void) {
       // get colours for this teff and logg
       float col1 = u[i]-g[i]; float col2=g[i]-red[redKey][i];
       float tmp = Subs::sqr( (col1-uming)/del_uming ) +
-	Subs::sqr( (col2-gminr)/del_gminr );
+            Subs::sqr( (col2-gminr)/del_gminr );
       int j = i-(nteff*(i/nteff));
       int k = (i/nteff);
       //cout << j << " " << k << endl;
@@ -367,7 +383,7 @@ int main(void) {
       tstore[j]=teff[i];
       gstore[k]=logg[i];
     }
-     // Plot chisq surface
+    // Plot chisq surface
     plot.open("chisq.ps/cps");
     cpgsch(1.5);
     cpgscf(2);
@@ -398,32 +414,32 @@ int main(void) {
       cin >> logg_fix;
     }
     if(fix == "n"){
-      // method one: no constraints on log g
-      for(int i=0; i<nteff; i++){
-	// find the logg which gives the minimum chisq at each teff
-	// and record which chisq it gives for each teff
-	Subs::Array1D<float> store(nlogg);
-	for (int j=0; j<nlogg; j++){
-	  store[j] = chisq2[i][j];
-	}
-	chimin.push_back(store.min());
-	int jpos = minloc(store);
-	umin.push_back(uMagStore[i][jpos]);
-	gmin.push_back(gMagStore[i][jpos]);
-	rmin.push_back(rMagStore[i][jpos]);
-      }
+        // method one: no constraints on log g
+        for(int i=0; i<nteff; i++){
+            // find the logg which gives the minimum chisq at each teff
+            // and record which chisq it gives for each teff
+            Subs::Array1D<float> store(nlogg);
+            for (int j=0; j<nlogg; j++){
+              store[j] = chisq2[i][j];
+            }
+            chimin.push_back(store.min());
+            int jpos = minloc(store);
+            umin.push_back(uMagStore[i][jpos]);
+            gmin.push_back(gMagStore[i][jpos]);
+            rmin.push_back(rMagStore[i][jpos]);
+        }
     } else {
-      // method 2: constrain log g from mass
-      for(int i=0; i<nteff; i++){
-	for (int j=0; j<nlogg; j++){
-	  if(gstore[j]==logg_fix) {
-	    chimin.push_back(chisq2[i][j]);
-	    umin.push_back(uMagStore[i][j]);
-	    gmin.push_back(gMagStore[i][j]);
-	    rmin.push_back(rMagStore[i][j]);
-	  }
-	}
-      }
+        // method 2: constrain log g from mass
+        for(int i=0; i<nteff; i++){
+            for (int j=0; j<nlogg; j++){
+              if(gstore[j]==logg_fix) {
+                chimin.push_back(chisq2[i][j]);
+                umin.push_back(uMagStore[i][j]);
+                gmin.push_back(gMagStore[i][j]);
+                rmin.push_back(rMagStore[i][j]);
+              }
+            }
+        }
     }
     cpgenv(tstore.min(),tstore.max(),chimin.min(),chimin.max(),0,0);
     //cpgenv(8000.0,13000.0,0.0,200.0,0,0);
@@ -432,64 +448,64 @@ int main(void) {
     cpgline(tstore.size(),tstore.ptr(),chimin.ptr());
     // spline interpolate function
     {
-      Vec_DP x(tstore.size()), y(tstore.size()), d2y(tstore.size());
-      for(int i=0; i< tstore.size(); i++){
-	x[i] = tstore[i]; 
-	y[i] = chimin[i];
-      }
-      int minpos = minloc(chimin);
-      float uAct = umin[minpos];
-      float gAct = gmin[minpos];
-      float rAct = rmin[minpos];
-      DP yp1, ypn;
-      yp1 = 1.0e30; ypn = 1.0e30;
-      // spline interpolate Teff
-      NR::spline(x,y,yp1,ypn,d2y);
-      Subs::Array1D<float>  spline_x(5000),spline_y(5000); 
-      for(int i=0; i<5000; i++){
-	DP xtmp, ytmp;
-	xtmp = tstore.min() + (tstore.max()-tstore.min())*float(i)/float(5000.0);
-	NR::splint(x,y,d2y,xtmp,ytmp);
-	spline_x[i] = xtmp;
-	spline_y[i] = ytmp;
-      }
+        Vec_DP x(tstore.size()), y(tstore.size()), d2y(tstore.size());
+        for(int i=0; i< tstore.size(); i++){
+            x[i] = tstore[i]; 
+            y[i] = chimin[i];
+        }
+        int minpos = minloc(chimin);
+        float uAct = umin[minpos];
+        float gAct = gmin[minpos];
+        float rAct = rmin[minpos];
+        DP yp1, ypn;
+        yp1 = 1.0e30; ypn = 1.0e30;
+        // spline interpolate Teff
+        NR::spline(x,y,yp1,ypn,d2y);
+        Subs::Array1D<float>  spline_x(5000),spline_y(5000); 
+        for(int i=0; i<5000; i++){
+            DP xtmp, ytmp;
+            xtmp = tstore.min() + (tstore.max()-tstore.min())*float(i)/float(5000.0);
+            NR::splint(x,y,d2y,xtmp,ytmp);
+            spline_x[i] = xtmp;
+            spline_y[i] = ytmp;
+        }
 
-      cpgsci(3);
-      cpgline(spline_x.size(),spline_x.ptr(),spline_y.ptr());
-      cpgsci(1);
-      // minimum of chisq interpolation
-      float min = spline_y.min();
-      minpos = minloc(spline_y);
-      // find errors in parameter by looking for delta chisq = 1 in increasing parameter direction
-      float check=min; int loop=minpos;
-      while(check <= min+1.0){
-	loop++;
-	check = spline_y[loop];
-      }
-      // linearly interpolate between last two values in order to find exact point
-      float stretch = (min+1-spline_y[loop-1])/(spline_y[loop] - spline_y[loop-1]) ;
-      float plusSigma = spline_x[loop-1] 
-	+ stretch*(spline_x[loop]-spline_x[loop-1]);
-      plusSigma -= spline_x[minpos];
-      // find lower error on parameter
-      loop = minpos; check=min;
-      while(check <= min+1.0){
-	loop--;
-	check = spline_y[loop];
-      }
-      // linearly interpolate between last two values in order to find exact point
-      stretch = (min+1-spline_y[loop])/(spline_y[loop+1] - spline_y[loop]) ;
-      float minusSigma = spline_x[loop] 
-	+ stretch*(spline_x[loop+1]-spline_x[loop]);
-      minusSigma = spline_x[minpos]-minusSigma;
-      cout << endl<< endl << "Teff  = " << spline_x[minpos] << 
-	" + " << plusSigma << " - " << minusSigma << endl;
+        cpgsci(3);
+        cpgline(spline_x.size(),spline_x.ptr(),spline_y.ptr());
+        cpgsci(1);
+        // minimum of chisq interpolation
+        float min = spline_y.min();
+        minpos = minloc(spline_y);
+        // find errors in parameter by looking for delta chisq = 1 in increasing parameter direction
+        float check=min; int loop=minpos;
+        while(check <= min+1.0){
+            loop++;
+            check = spline_y[loop];
+        }
+        // linearly interpolate between last two values in order to find exact point
+        float stretch = (min+1-spline_y[loop-1])/(spline_y[loop] - spline_y[loop-1]) ;
+        float plusSigma = spline_x[loop-1] 
+            + stretch*(spline_x[loop]-spline_x[loop-1]);
+        plusSigma -= spline_x[minpos];
+        // find lower error on parameter
+        loop = minpos; check=min;
+        while(check <= min+1.0){
+            loop--;
+            check = spline_y[loop];
+        }
+        // linearly interpolate between last two values in order to find exact point
+        stretch = (min+1-spline_y[loop])/(spline_y[loop+1] - spline_y[loop]) ;
+        float minusSigma = spline_x[loop] 
+            + stretch*(spline_x[loop+1]-spline_x[loop]);
+        minusSigma = spline_x[minpos]-minusSigma;
+        cout << endl<< endl << "Teff  = " << spline_x[minpos] << 
+            " + " << plusSigma << " - " << minusSigma << endl;
 
-      float uDist = 10.0*pow(10.0,(up-uAct)/5.0);
-      float gDist = 10.0*pow(10.0,(gp-gAct)/5.0);
-      float rDist = 10.0*pow(10.0,(rp-rAct)/5.0);
-      cout << "u,g,r distances are: " << uDist
-	   << " " << gDist << " " << rDist << endl;
+        float uDist = 10.0*pow(10.0,(up-uAct)/5.0);
+        float gDist = 10.0*pow(10.0,(gp-gAct)/5.0);
+        float rDist = 10.0*pow(10.0,(rp-rAct)/5.0);
+        cout << "u,g,r distances are: " << uDist
+            << " " << gDist << " " << rDist << endl;
     } 
 
        
