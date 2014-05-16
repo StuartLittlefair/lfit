@@ -2,7 +2,10 @@
 *.txt
 *.log
 *.ps
+*.pdf
 *.out
+lfit_fake
+lfit.csh
 params/colourevo
 params/convert
 params/incl
