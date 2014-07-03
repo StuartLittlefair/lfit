@@ -4,6 +4,7 @@ from mcmc_utils import *
 import scipy.interpolate as interp
 import matplotlib.pyplot as plt
 from collections import MutableSequence
+import warnings
 
 class wdModel(MutableSequence):
     '''wd model
@@ -74,7 +75,7 @@ def model(thisModel,rind=6):
     abs_mags = []
     # u data in col 4, g in col 5, red in rind (r=6, i=7, z=8)
     for col_indx in [4,5,rind]:
-        z = data[:,col_indx+1]
+        z = data[:,col_indx]
         z = z.reshape((nlogg,nteff))
         # cubic bivariate spline interpolation
         func = interp.RectBivariateSpline(loggs,teffs,z,kx=3,ky=3)
@@ -230,7 +231,8 @@ def plotColors(colors):
     plt.savefig('colorPlot.pdf')
     
 if __name__ == "__main__":
-
+    warnings.simplefilter("ignore")
+    
     import argparse
     parser = argparse.ArgumentParser(description='Fit WD Fluxes')
     parser.add_argument('file',action='store',help="input file")
@@ -276,14 +278,15 @@ if __name__ == "__main__":
     npars = myModel.npars
     if toFit:
         guessP = np.array([par for par in myModel])
-        nameList = ['Teff','log g','d','egi']
+        nameList = ['Teff','log g','d','E(B-V)']
         
         p0 = emcee.utils.sample_ball(guessP,scatter*guessP,size=nwalkers)
         sampler = emcee.EnsembleSampler(nwalkers,npars,ln_prob,args=[myModel,y,e,redindex],threads=nthread)
     
         #burnIn
         pos, prob, state = run_burnin(sampler,p0,nburn)
-    
+        #pos, prob, state = sampler.run_mcmc(p0,nburn)
+
         #production
         sampler.reset()
         sampler = run_mcmc_save(sampler,pos,nprod,state,"chain.txt")  
@@ -293,6 +296,8 @@ if __name__ == "__main__":
         for i in range(npars):
             par = chain[:,i]
             lolim,best,uplim = np.percentile(par,[16,50,84])
+            myModel[i] = best
+            
             print "%s = %f +%f -%f" % (nameList[i],best,uplim-best,best-lolim)
             bestPars.append(best)
         fig = thumbPlot(chain,nameList)

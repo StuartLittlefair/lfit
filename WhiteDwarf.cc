@@ -81,9 +81,10 @@ double LFIT::WhiteDwarf::calcFlux(const double& q,
       pup = delta/2.0 + this->radius;
     }
     
-    double ptest = fabs(phi - 1.0);
+    // make sure phase to test has no integer part and is greater than 0
+    double ptest = fabs(phi - floor(phi));
+    if (ptest > 0.5){ ptest = 1.0-ptest;}
 
-    
     if(ptest-width/2.0 > pup) {
         wflux= 1.0;
     } else if(ptest+width/2.0 < plo){
@@ -93,12 +94,12 @@ double LFIT::WhiteDwarf::calcFlux(const double& q,
       int nphi = 5;
       //#pragma omp parallel for reduction(+:wflux)
       for(int i=0; i<nphi; i++){
-	double p = phi1 + width*double(i)/double(nphi-1);
-	if(i == 0 || i == nphi-1){
-	  wflux += LFIT::WhiteDwarf::calcFlux(q,p,incl)/2.0;
-	}else{
-	  wflux += LFIT::WhiteDwarf::calcFlux(q,p,incl);
-	}
+        double p = phi1 + width*double(i)/double(nphi-1);
+        if(i == 0 || i == nphi-1){
+          wflux += LFIT::WhiteDwarf::calcFlux(q,p,incl)/2.0;
+        }else{
+          wflux += LFIT::WhiteDwarf::calcFlux(q,p,incl);
+        }
       }
       wflux /= double(nphi-1);
     }

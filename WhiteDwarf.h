@@ -47,6 +47,19 @@ namespace LFIT{
         double calcFlux(const double& q, const double& phi, 
                         const double& width,
                         const double& incl);
+                        
+        double get_radius(){
+            return this->radius;
+        }
+        void set_radius(double _radius){
+            this->radius = _radius;
+        }        
+        double get_ulimb(){
+            return this->ulimb;
+        }
+        void set_ulimb(double _ulimb){
+            this->ulimb = _ulimb;
+        }
         
     private:
         double radius; // radius of wd in units of XL1
