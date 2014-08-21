@@ -52,13 +52,13 @@ namespace LFIT{
             return this->radius;
         }
         void set_radius(double _radius){
-            this->radius = _radius;
+            this->tweak(_radius,this->ulimb);
         }        
         double get_ulimb(){
             return this->ulimb;
         }
         void set_ulimb(double _ulimb){
-            this->ulimb = _ulimb;
+            this->tweak(this->radius,_ulimb);
         }
         
     private:

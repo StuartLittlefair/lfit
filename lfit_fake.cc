@@ -26,6 +26,7 @@ void load(const std::string filename, LFIT::Params& params){
       pIn.push_back( Subs::string_to_double(substr));
     }
   }
+  //std::cout << pIn.size() << std::endl;
   if(pIn.size() > 10){
     params.complexSpot=true;
   }

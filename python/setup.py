@@ -2,10 +2,10 @@ from distutils.core import setup
 from Cython.Build import cythonize
 from distutils.extension import Extension
 import numpy 
-import os
+import os, sys
 
 library_dirs = []
-include_dirs = []
+include_dirs = ['..']
 
 # need to direct to where includes and  libraries are
 if os.environ.has_key('TRM_SOFTWARE'):

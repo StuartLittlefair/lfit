@@ -48,7 +48,6 @@ namespace LFIT{
             tiles.resize(size);
             this->tweak(q,rwd_,rd_,exp_);
         }
-
 		
         bool paramsChanged(const double& q, const double& rwd, const double& rd, const double& exp_);
         void tweak(const double& q, const double& rwd, const double& rd, const double& exp_);
@@ -56,6 +55,7 @@ namespace LFIT{
         double calcFlux(const double& q, const double& phi, const double& incl);
         double calcFlux(const double& q, const double& phi, const double& width,
                         const double& incl);
+
     private:
         Subs::Buffer1D<DiscEl> tiles;
         double rin;

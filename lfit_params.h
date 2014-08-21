@@ -1,3 +1,5 @@
+#include "trm/subs.h"
+#include "trm/array1d.h"
 // find inclination from mass ratio and phase width of eclipse
 double finddeg(const double& q, const double& dphi);
 

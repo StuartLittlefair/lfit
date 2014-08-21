@@ -19,3 +19,9 @@ lfit
 discEclipse
 *.pyc
 *.a
+python/*.so
+python/build
+python/gfit.in
+python/lfit.cpp
+python/test
+python/testWD.py

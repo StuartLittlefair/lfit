@@ -52,8 +52,7 @@ double LFIT::BrightSpot::getTangent() const{
   return alpha + Constants::TWOPI/4.;
 }
 
-double LFIT::BrightSpot::simpleFlux(const double& q,
-const double& phi, const double& incl){
+double LFIT::BrightSpot::simpleFlux(const double& q,const double& phi, const double& incl){
    /*
      * Computes light curve of spot assuming that it is a linear feature
      * with an intensity that varies as (X/LS)**N*EXP(-X/LS) where X
@@ -147,10 +146,7 @@ const double& phi, const double& incl){
     return bflux;
 }
 
-
-
-double LFIT::BrightSpot::calcFlux(const double& q,
-const double& phi, const double& incl){
+double LFIT::BrightSpot::calcFlux(const double& q,const double& phi, const double& incl){
 	
 	// SIMPLE: do old-style LFIT calculation with single bright spot strip hard-coded to exponent of 2
 	if (!complex){return LFIT::BrightSpot::simpleFlux(q,phi,incl);}

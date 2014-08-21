@@ -58,7 +58,7 @@ namespace LFIT{
 		double simpleFlux(const double& q, const double& phi, const double& incl);
         double   calcFlux(const double& q, const double& phi, const double& width,
                         const double& incl);
-	double getTangent() const;
+	    double getTangent() const;
     private:
 		bool  complex; //use the complex bright spot model or not
 		double q; // last computed q 
