@@ -268,6 +268,9 @@ if __name__ == "__main__":
     e = np.sqrt(e**2 + (syserr*y)**2)
     print 'after sys = ', e
 
+    # add sys errors to ume
+    ume, gme, rme = e
+    
     teff = parseParam( input_dict['teff'] )
     logg = parseParam( input_dict['logg'] )
     dist = parseParam( input_dict['dist'] )
