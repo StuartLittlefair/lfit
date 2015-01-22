@@ -235,7 +235,7 @@ class CV(object):
         
         self.wd = PyWhiteDwarf(rwd/xl1,ulimb)
         self.disc = PyDisc(q,rwd/xl1,rdisc,dexp,nel_disc)
-        if complex:
+        if self.complex:
             self.spot = PySpot(q,rdisc,az,fis,scale,exp1,exp2,tilt,yaw,self.complex)
         else:
             self.spot = PySpot(q,rdisc,az,fis,scale)
