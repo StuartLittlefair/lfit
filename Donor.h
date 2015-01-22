@@ -72,6 +72,19 @@ namespace LFIT{
         double calcFlux(const double& phi, const double& width,
                         const double& incl);
         Subs::Buffer1D<double> getBright();
+        double get_q(){
+            return this->q_old;
+        }
+        void set_q(double q){
+            this->tweak(q);
+        }
+        int get_size(){
+            return this->tiles.size();
+        }
+        void set_size(int size){
+            this->tiles.resize(size);
+            this->tweak(this->q_old);
+        }
     private:
         Subs::Buffer1D<DonorEl> tiles;
         double beta; 
