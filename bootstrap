@@ -1,7 +1,0 @@
-#!/bin/sh -v
-#
-# Prepares distribution to be in the usual
-# state for running './configure', 'make' and
-# 'make install'
-
-autoreconf -f -i -s
