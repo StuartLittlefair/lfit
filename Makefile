@@ -2,11 +2,10 @@
 CC=g++
 CFLAGS=-O3
 
-DATE		= $(shell date)
-CURRENT		= $(shell git tag | tail -n 1)
-PREVIOUS	= $(shell git tag | tail -n 2 | head -n 1)
-
 TRM_SOFTWARE = /usr/local/trm_code
+
+# STOP EDITING
+
 
 LDFLAGS = -L/usr/local/lib -L$(TRM_SOFTWARE)/lib -L/usr/X11/lib
 CPPFLAGS = -I/usr/local/include -I$(TRM_SOFTWARE)/include -I/usr/X11/include -I./include
