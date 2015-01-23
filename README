@@ -1,0 +1,16 @@
+
+'lfit' is a program for fitting CV lightcurves. It depends
+heavily on Tom Marsh's C++ libraries
+
+Installation order: subs --> roche
+
+Further dependencies are SLALIB, READLINE, GSL and BLAS.
+See www.astro.warwick.ac.uk/people/marsh/software for further info.
+
+Installation
+------------
+
+Main installation notes are in 'INSTALL'. If installing for the first time,
+run './bootstrap' before anything else which tries to get the autotools 
+stuff configured.
+
