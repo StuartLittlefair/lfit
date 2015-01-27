@@ -5,7 +5,7 @@ import numpy
 import os, sys
 
 library_dirs = []
-include_dirs = ['..']
+include_dirs = ['../include']
 
 # need to direct to where includes and  libraries are
 if os.environ.has_key('TRM_SOFTWARE'):
