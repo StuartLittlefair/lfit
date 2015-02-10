@@ -1,5 +1,5 @@
 # distutils: language = c++
-# distutils: sources = [../WhiteDwarf.cc, ../Disc.cc, ../BrightSpot.cc, ../Donor.cc, ../finddeg.cc]
+# distutils: sources = [../src/WhiteDwarf.cc, ../src/Disc.cc, ../src/BrightSpot.cc, ../src/Donor.cc, ../src/finddeg.cc]
 cimport numpy as np
 import numpy as np
 from libcpp cimport bool
