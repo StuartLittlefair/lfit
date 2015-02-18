@@ -162,14 +162,19 @@ if __name__ == "__main__":
     chain = readchain(file)
     nwalkers, nsteps, npars = chain.shape
     fchain = flatchain(chain,npars,thin=thin)
+    
+    gp_offset = 0
+    if fchain.shape[1] > 19:
+        # we have a namelist with GP hyperparameters
+        gp_offset = 2
 
     # this is the order of the params in the chain
     nameList = ['fwd','fdisc','fbs','fd','q','dphi','rdisc','ulimb','rwd','scale', \
                         'az','frac','rexp','off','exp1','exp2','tilt','yaw']
     # we need q, dphi, rw from the chain
-    qVals = fchain[:,4]
-    dphiVals = fchain[:,5]
-    rwVals  = fchain[:,8]
+    qVals = fchain[:,4+gp_offset]
+    dphiVals = fchain[:,5+gp_offset]
+    rwVals  = fchain[:,8+gp_offset]
     chainLength = len(qVals)
 
     # white dwarf temp
@@ -222,6 +227,7 @@ if __name__ == "__main__":
             # from this wd mass and scaled mass, find a
             a3 = scaled_mass*mw
             a = a3**(1./3.)
+            a = a.to(units.R_sun)
 
             # inc
             inc = roche.findi(q,dphi)
