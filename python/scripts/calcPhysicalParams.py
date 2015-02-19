@@ -256,7 +256,7 @@ if __name__ == "__main__":
             # need to be a little careful here for different versions of astropy
             if not quantitySupport:
                 data = (q,mw,rw_a*a,mr,r2,a,kw,kr,inc)
-                dvals = [getval[datum] for datum in data]
+                dvals = [getval(datum) for datum in data]
                 results.add_row(dvals)
             else:
                 results.add_row((q,mw,rw_a*a,mr,r2,a,kw,kr,inc))
