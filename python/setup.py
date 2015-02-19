@@ -29,7 +29,6 @@ setup(
     name = "lfit",
     version="0.1",
     description="Calculate and fit CV lightcurves",
-    zip_safe = False,
     ext_modules = cythonize(ext_modules),
     url = "https://github.com/StuartLittlefair/lfit",
     author_email = "s.littlefair@shef.ac.uk",
