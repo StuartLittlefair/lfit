@@ -1,3 +1,4 @@
+#cython: embedsignature=True
 # distutils: language = c++
 # distutils: sources = [../src/WhiteDwarf.cc, ../src/Disc.cc, ../src/BrightSpot.cc, ../src/Donor.cc, ../src/finddeg.cc]
 cimport numpy as np
@@ -222,8 +223,47 @@ cdef class PyWhiteDwarf:
 
 ############## CV #######################   
 class CV(object):
+    '''A Wrapper object that holds a disc, donor, bright spot and white dwarf
+       and provides convenient routines for calculating the total flux.
+       
+       Access is provided to the underlying components for advanced use, but
+       most users will only ever need to use the calcFlux method, and access
+       the ywd, yd, ys and yrs properties which, when calculated provide arrays
+       of the white dwarf, disc, bright spot, and donor star fluxes respectively''' 
     def __init__(self,pars,nel_disc=1000,nel_donor=400):
-        print len(pars)
+        '''initialiser for CV object. The parameters argument is a tuple, array or
+        list which contains either 14 parameters, or 18 parameters for more complicated
+        bright spot models. 
+        
+        The bright spot is modelled as a linear strip at an angle to the line of centres.
+        A fraction of the bright spot strip radiates isotropically, whilst the remainder
+        is beamed normal to the surface (in the simple model). In the more complex model
+        the bright spot can be made to decay in brightness along it's length at different
+        rates (by the two exponent parameters), and beam in a direction other than the normal
+        to the direction (using the tilt and yaw parameters
+        
+        The CV parameters are (in order):
+        wdFlux -  white dwarf flux at maximum light
+        dFlux  -  disc flux at maximum light
+        sFlux  -  bright spot flux at maximum light
+        rsFlux -  donor flux at maximum light
+        q      -  mass ratio
+        dphi   -  full width of white dwarf at mid ingress/egress
+        rdisc  -  radius of accretion disc (scaled by distance to inner lagrangian point XL1)
+        ulimb  -  linear limb darkening parameter for white dwarf
+        rwd    -  white dwarf radius (scaled to XL1)
+        scale  -  bright spot scale (scaled to XL1)
+        az     -  the azimuth of the bright spot strip (w.r.t to line of centres between stars)
+        fis    -  the fraction of the bright spot's flux which radiates isotropically
+        dexp   -  the exponent which governs how the brightness of the disc falls off with radius
+        phi0   -  a phase offset
+        
+        the next four parameters are only used for complex bright spot models
+        exp1, exp2, tilt, yaw. Their use is described above.
+        
+        The accretion disc and donor are broken into tiles covering their surface. You can
+        override the defaults for these tiles by setting the nel_disc or nel_donor arguments.
+        This can increase numerical accuracy at the expense of computing time'''
         assert (len(pars) == 18) or (len(pars) == 14)
         wdFlux,dFlux,sFlux,rsFlux,q,dphi,rdisc,ulimb,rwd,scale,az,fis,dexp,phi0 = pars[0:14]
         self.complex = False
@@ -240,8 +280,23 @@ class CV(object):
         else:
             self.spot = PySpot(q,rdisc,az,fis,scale)
         self.donor = PyDonor(q,nel_donor)
+        self.ywd = None
+        self.yd = None
+        self.ys = None
+        self.yrs = None
+        self.computed = False
         
     def calcFlux(self,pars,phi,width=None):
+        '''tweaks the parameters and calculates the flux from the CV as a whole, and from the
+           components of the CV.
+           
+           the pars list is as described for creation of a CV, and you can switch between
+           simple and complex bright spots on the fly just by providing different numbers
+           of parameters.
+           
+           the flux at the phases given in phi is calculated and returned. If the optional
+           width argument is provided, the flux is calculated in a bin of this width and the 
+           average flux in this bin is returned'''
         assert (len(pars) == 18) or (len(pars) == 14)
         wdFlux,dFlux,sFlux,rsFlux,q,dphi,rdisc,ulimb,rwd,scale,az,fis,dexp,phi0 = pars[0:14]
         self.complex = False
@@ -257,9 +312,10 @@ class CV(object):
             self.spot.tweak(q,rdisc,az,fis,scale,self.complex,exp1,exp2,tilt,yaw)
         else:
             self.spot.tweak(q,rdisc,az,fis,scale)
-        ywd = self.wd.calcFlux(q,inc,phi,width)
-        yd  = self.disc.calcFlux(q,inc,phi,width)
-        ys  = self.spot.calcFlux(q,inc,phi,width)
-        yrs = self.donor.calcFlux(q,inc,phi,width) 
+        self.ywd = wdFlux*self.wd.calcFlux(q,inc,phi,width)
+        self.yd  = dFlux*self.disc.calcFlux(q,inc,phi,width)
+        self.ys  = sFlux*self.spot.calcFlux(q,inc,phi,width)
+        self.yrs = rsFlux*self.donor.calcFlux(q,inc,phi,width) 
+        self.computed = True
         
-        return wdFlux*ywd + dFlux*yd + sFlux*ys + rsFlux*yrs                       
+        return self.ywd + self.yd + self.ys + self.yrs                       
