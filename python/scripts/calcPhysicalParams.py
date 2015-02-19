@@ -5,6 +5,13 @@ from trm import roche
 import os, sys
 from astropy import constants as const, units
 from astropy.table import Table, Column
+# see if our astropy version supports quantities or not
+quantitySupport = True
+try:
+    from astropy.table import QTable
+except:
+    quantitySupport = False
+
 import argparse
 from scipy import interpolate as interp
 from scipy.optimize import fsolve, brentq
@@ -182,7 +189,6 @@ if __name__ == "__main__":
     # period
     pVals = np.random.normal(loc=args.p,scale=args.e_p,size=chainLength)*units.d
 
-
     # loop over the MCMC chain, calculating system parameters as we go
     iStep = 0
     nSolutions=0
@@ -190,7 +196,11 @@ if __name__ == "__main__":
     
     # table for results
     results = Table(names=('q','Mw','Rw','Mr','Rr','a','Kw','Kr','incl'))
-
+    # need to be a little careful about astropy versions here, since only
+    # versions >=1.0 allow quantities in tables
+    # function below extracts value from quantity and floats alike
+    getval = lambda el: getattr(el,'value',el) 
+            
     for q,dphi,rw,twd,p in zip(qVals,dphiVals,rwVals,twdVals,pVals):
         iStep += 1
         bar.render(int(100.*iStep/chainLength),'calculating parameters')
@@ -242,8 +252,14 @@ if __name__ == "__main__":
             #radius of sphere with same volume as Roche Lobe...
             r2 = 0.49*a*q**(2.0/3.0)
             r2 /= 0.6 * q**(2.0/3.0) + np.log(1.0+q**(1.0/3.0))
-            
-            results.add_row((q,mw,rw_a*a,mr,r2,a,kw,kr,inc))
+
+            # need to be a little careful here for different versions of astropy
+            if not quantitySupport:
+                data = (q,mw,rw_a*a,mr,r2,a,kw,kr,inc)
+                dvals = [getval[datum] for datum in data]
+                results.add_row(dvals)
+            else:
+                results.add_row((q,mw,rw_a*a,mr,r2,a,kw,kr,inc))
 
     
     print 'Found solutions for %d percent of samples in MCMC chain' % (100*float(len(results))/float(chainLength))
