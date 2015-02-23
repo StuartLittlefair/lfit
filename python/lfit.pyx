@@ -303,8 +303,31 @@ class CV(object):
         if len(pars) > 14:
             exp1, exp2, tilt, yaw = pars[14:]
             self.complex = True
+            
         xl1 = roche.xl1(q)
         inc = roche.findi(q,dphi)
+        if inc < 0:
+            raise Exception('invalid combination of q and dphi: %f %f' % (q, dphi))   
+            
+        bsValid = True
+        # check for valid BS parameters
+        slop = 40.0
+        rd_a = rdisc*xl1
+        try:
+            x,y,vx,vy = roche.bspot(q,rd_a)
+            alpha = np.degrees(np.arctan2(y,x))
+            # alpha is between -90 and 90. if negative spot lags disc ie alpha > 90
+            if alpha < 0: alpha = 90-alpha
+            tangent = alpha + 90 # disc tangent    
+            
+            # azimuth must be between 0 and 178, and less than 40 degrees from 
+            # disc tangent
+            if (az < 0) or (az > 178) or (np.fabs(tangent-az) > slop):
+                raise Exception('invalid BS azimuth: %f' % az)
+        except:
+            # if roche.bspot raises error, we didn't hit disc
+                raise Exception('Gas stream does not hit disc for q, rw = %f, %f' % (q,disc))
+
         self.wd.tweak(rwd/xl1,ulimb)
         self.disc.tweak(q,rwd/xl1,rdisc,dexp)
         self.donor.tweak(q)
