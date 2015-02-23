@@ -326,7 +326,7 @@ class CV(object):
                 raise Exception('invalid BS azimuth: %f' % az)
         except:
             # if roche.bspot raises error, we didn't hit disc
-                raise Exception('Gas stream does not hit disc for q, rw = %f, %f' % (q,disc))
+                raise Exception('Gas stream does not hit disc for q, rw = %f, %f' % (q,rdisc))
 
         self.wd.tweak(rwd/xl1,ulimb)
         self.disc.tweak(q,rwd/xl1,rdisc,dexp)
