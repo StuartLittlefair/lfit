@@ -196,21 +196,8 @@ def solve(input_data,baseDir):
         return data
     else:
         return None
-    
-def parallel_function(f):
-    '''return a parallelised version of function f, from
-    http://scottsievert.github.io/blog/2014/07/30/simple-python-parallelism'''
-    def easy_parallize(f, sequence):
-        """ assumes f takes sequence as input, easy w/ Python's scope """
-        pool = Pool(processes=4) # depends on available cores
-        result = pool.map(f, sequence) # for i in sequence: result[i] = f(i)
-        cleaned = [x for x in result if not x is None] # getting results
-        cleaned = asarray(cleaned)
-        pool.close() # not optimal! but easy
-        pool.join()
-        return cleaned
-    return partial(easy_parallize, f)
-            
+     
+
 if __name__ == "__main__":
 
     sns.set()
@@ -273,6 +260,8 @@ if __name__ == "__main__":
         for datum in zip(qVals,dphiVals,rwVals,twdVals,pVals)]
     
     # now, as the worker processes return values, put them into a list
+    # slightly non optimal since they may not return in the order 
+    # submitted, but doesn't seem to matter much in practice
     solvedParams = []
     for worker_output in workers:
         iStep += 1
@@ -283,6 +272,7 @@ if __name__ == "__main__":
     for thisResult in solvedParams:
         if thisResult is not None:
             results.add_row(thisResult)      
+
     
     print 'Found solutions for %d percent of samples in MCMC chain' % (100*float(len(results))/float(chainLength))
     results.write('physicalparams.log',format='ascii.commented_header')
