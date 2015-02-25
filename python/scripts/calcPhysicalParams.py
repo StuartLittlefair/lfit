@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+import multiprocessing as mp
 from mcmc_utils import *
 import numpy as np
 from trm import roche
@@ -135,6 +136,66 @@ def find_wdmass(wdtemp,scaled_mass,rw_a,baseDir,model='hamada'):
     
     # OK, there should be a solution: return it
     return brentq(funcToSolve,mlo,mhi)*units.M_sun    
+  
+def solve(input_data,baseDir):
+    q,dphi,rw,twd,p = input_data
+
+    # Kepler's law gives a quantity related to wd mass and separation, a
+    # scaled_mass = a**3/M_wd. I call this the scaled mass.
+    scaled_mass = const.G * (1+q) * p**2 / 4.0 / np.pi**2
+
+    # convert white dwarf radius to units of separation, rw/a
+    xl1_a = roche.xl1(q)
+    rw_a = rw*xl1_a
+
+    solved = True
+    try:
+        # try wood models
+        mw = find_wdmass(twd,scaled_mass,rw_a,baseDir,model='wood')
+    except:
+        # try panei models (usually for masses above 1 Msun)
+        try:
+            mw = find_wdmass(twd,scaled_mass,rw_a,baseDir,model='panei')
+        except:
+            # try hamada models (for masses less than 0.4 or more than 1.2 Msun)
+            try:
+                mw=find_wdmass(twd,scaled_mass,rw_a,baseDir,model='hamada')
+            except:
+                solved = False
+
+    # do nothing if none of the models yielded a solution
+    # otherwise,         
+    if solved:
+        # donor star mass
+        mr = mw*q
+        
+        # from this wd mass and scaled mass, find a
+        a3 = scaled_mass*mw
+        a = a3**(1./3.)
+        a = a.to(units.R_sun)
+
+        # inc
+        inc = roche.findi(q,dphi)
+        sini = np.sin(np.radians(inc))
+
+        # radial velocities
+        kw = (2.0*np.pi*sini*q*a/(1+q)/p).to(units.km/units.s)
+        kr = kw/q
+        
+        #secondary radius
+        #use from Warner 1995 (eggleton)
+        #radius of sphere with same volume as Roche Lobe...
+        r2 = 0.49*a*q**(2.0/3.0)
+        r2 /= 0.6 * q**(2.0/3.0) + np.log(1.0+q**(1.0/3.0))
+
+        # need to be a little careful here for different versions of astropy
+        data = (q,mw,rw_a*a,mr,r2,a,kw,kr,inc)
+        if not quantitySupport:
+            data = [getval(datum) for datum in data]
+            
+        return data
+    else:
+        return None
     
 def parallel_function(f):
     '''return a parallelised version of function f, from
@@ -160,10 +221,13 @@ if __name__ == "__main__":
     parser.add_argument('p',action='store',type=float,help='orbital period (days)')
     parser.add_argument('e_p',action='store',type=float,help='error on period')
     parser.add_argument('--thin','-t',type=int,help='amount to thin MCMC chain by',default=10)
+    parser.add_argument('--nthreads','-n',type=int,help='number of threads to run',default=4)
+
     parser.add_argument('--dir','-d',help='directory with WD models',default='/Users/sl/code/c++/lfit/params')
     args = parser.parse_args()
     file = args.file
     thin = args.thin
+    nthreads = args.nthreads
     baseDir = args.dir
 
     chain = readchain(file)
@@ -201,66 +265,24 @@ if __name__ == "__main__":
     # function below extracts value from quantity and floats alike
     getval = lambda el: getattr(el,'value',el) 
             
-    for q,dphi,rw,twd,p in zip(qVals,dphiVals,rwVals,twdVals,pVals):
+    # make a pool of worker processes to plow through the calculations      
+    pool = mp.Pool(processes=nthreads)
+    
+    # submit every step in the MCMC chain to the pool for processing
+    workers = [pool.apply_async(solve, args=(datum,baseDir)) \
+        for datum in zip(qVals,dphiVals,rwVals,twdVals,pVals)]
+    
+    # now, as the worker processes return values, put them into a list
+    solvedParams = []
+    for worker_output in workers:
         iStep += 1
+        solvedParams.append(worker_output.get())
         bar.render(int(100.*iStep/chainLength),'calculating parameters')
         
-        # Kepler's law gives a quantity related to wd mass and separation, a
-        # scaled_mass = a**3/M_wd. I call this the scaled mass.
-        scaled_mass = const.G * (1+q) * p**2 / 4.0 / np.pi**2
-    
-        # convert white dwarf radius to units of separation, rw/a
-        xl1_a = roche.xl1(q)
-        rw_a = rw*xl1_a
-    
-        solved = True
-        try:
-            # try wood models
-            mw = find_wdmass(twd,scaled_mass,rw_a,baseDir,model='wood')
-        except:
-            # try panei models (usually for masses above 1 Msun)
-            try:
-                mw = find_wdmass(twd,scaled_mass,rw_a,baseDir,model='panei')
-            except:
-                # try hamada models (for masses less than 0.4 or more than 1.2 Msun)
-                try:
-                    mw=find_wdmass(twd,scaled_mass,rw_a,baseDir,model='hamada')
-                except:
-                    solved = False
-
-        # do nothing if none of the models yielded a solution
-        # otherwise,         
-        if solved:
-            # donor star mass
-            mr = mw*q
-            
-            # from this wd mass and scaled mass, find a
-            a3 = scaled_mass*mw
-            a = a3**(1./3.)
-            a = a.to(units.R_sun)
-
-            # inc
-            inc = roche.findi(q,dphi)
-            sini = np.sin(np.radians(inc))
-
-            # radial velocities
-            kw = (2.0*np.pi*sini*q*a/(1+q)/p).to(units.km/units.s)
-            kr = kw/q
-            
-            #secondary radius
-            #use from Warner 1995 (eggleton)
-            #radius of sphere with same volume as Roche Lobe...
-            r2 = 0.49*a*q**(2.0/3.0)
-            r2 /= 0.6 * q**(2.0/3.0) + np.log(1.0+q**(1.0/3.0))
-
-            # need to be a little careful here for different versions of astropy
-            if not quantitySupport:
-                data = (q,mw,rw_a*a,mr,r2,a,kw,kr,inc)
-                dvals = [getval(datum) for datum in data]
-                results.add_row(dvals)
-            else:
-                results.add_row((q,mw,rw_a*a,mr,r2,a,kw,kr,inc))
-
+    # loop over these results and put all the solutions in our results table
+    for thisResult in solvedParams:
+        if thisResult is not None:
+            results.add_row(thisResult)      
     
     print 'Found solutions for %d percent of samples in MCMC chain' % (100*float(len(results))/float(chainLength))
     results.write('physicalparams.log',format='ascii.commented_header')
