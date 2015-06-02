@@ -1,11 +1,11 @@
 #!/usr/bin/env python
-import multiprocessing as mp
 from mcmc_utils import *
 import numpy as np
 from trm import roche
 import os, sys
 from astropy import constants as const, units
 from astropy.table import Table, Column
+from astropy.utils.console import ProgressBar
 # see if our astropy version supports quantities or not
 quantitySupport = True
 try:
@@ -13,12 +13,12 @@ try:
 except:
     quantitySupport = False
 
+from functools import partial
 import argparse
 from scipy import interpolate as interp
 from scipy.optimize import fsolve, brentq
 from matplotlib import pyplot as plt
 import seaborn as sns
-from progress import ProgressBar
 
 def read_wood_file(filename):
     '''The Wood 1995 thick H layer models (CO)
@@ -241,9 +241,6 @@ if __name__ == "__main__":
     pVals = np.random.normal(loc=args.p,scale=args.e_p,size=chainLength)*units.d
 
     # loop over the MCMC chain, calculating system parameters as we go
-    iStep = 0
-    nSolutions=0
-    bar = ProgressBar()
     
     # table for results
     results = Table(names=('q','Mw','Rw','Mr','Rr','a','Kw','Kr','incl'))
@@ -252,27 +249,14 @@ if __name__ == "__main__":
     # function below extracts value from quantity and floats alike
     getval = lambda el: getattr(el,'value',el) 
             
-    # make a pool of worker processes to plow through the calculations      
-    pool = mp.Pool(processes=nthreads)
-    
-    # submit every step in the MCMC chain to the pool for processing
-    workers = [pool.apply_async(solve, args=(datum,baseDir)) \
-        for datum in zip(qVals,dphiVals,rwVals,twdVals,pVals)]
-    
-    # now, as the worker processes return values, put them into a list
-    # slightly non optimal since they may not return in the order 
-    # submitted, but doesn't seem to matter much in practice
-    solvedParams = []
-    for worker_output in workers:
-        iStep += 1
-        solvedParams.append(worker_output.get())
-        bar.render(int(100.*iStep/chainLength),'calculating parameters')
-        
+    psolve = partial(solve,baseDir=baseDir)
+    data = zip(qVals,dphiVals,rwVals,twdVals,pVals)
+    solvedParams = ProgressBar.map(psolve,data,multiprocess=True)
+     
     # loop over these results and put all the solutions in our results table
     for thisResult in solvedParams:
         if thisResult is not None:
             results.add_row(thisResult)      
 
-    
     print 'Found solutions for %d percent of samples in MCMC chain' % (100*float(len(results))/float(chainLength))
     results.write('physicalparams.log',format='ascii.commented_header')
