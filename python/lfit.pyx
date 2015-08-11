@@ -325,6 +325,7 @@ class CV(object):
             if (az < 0) or (az > 178) or (np.fabs(tangent-az) > slop):
                 raise Exception('invalid BS azimuth: %f' % az)
         except Exception as e:
+            print e
             # if roche.bspot raises error, we didn't hit disc
             raise Exception('Gas stream does not hit disc for q, rw = %f, %f' % (q,rdisc))
 
