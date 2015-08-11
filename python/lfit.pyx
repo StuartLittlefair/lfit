@@ -335,10 +335,10 @@ class CV(object):
             self.spot.tweak(q,rdisc,az,fis,scale,self.complex,exp1,exp2,tilt,yaw)
         else:
             self.spot.tweak(q,rdisc,az,fis,scale)
-        self.ywd = wdFlux*self.wd.calcFlux(q,inc,phi,width)
-        self.yd  = dFlux*self.disc.calcFlux(q,inc,phi,width)
-        self.ys  = sFlux*self.spot.calcFlux(q,inc,phi,width)
-        self.yrs = rsFlux*self.donor.calcFlux(q,inc,phi,width) 
+        self.ywd = wdFlux*self.wd.calcFlux(q,inc,phi-phi0,width)
+        self.yd  = dFlux*self.disc.calcFlux(q,inc,phi-phi0,width)
+        self.ys  = sFlux*self.spot.calcFlux(q,inc,phi-phi0,width)
+        self.yrs = rsFlux*self.donor.calcFlux(q,inc,phi-phi0,width) 
         self.computed = True
         
         return self.ywd + self.yd + self.ys + self.yrs                       
