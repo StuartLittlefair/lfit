@@ -311,7 +311,7 @@ class CV(object):
             
         bsValid = True
         # check for valid BS parameters
-        slop = 55.0
+        slop = 80.0
         rd_a = rdisc*xl1
         try:
             x,y,vx,vy = roche.bspot(q,rd_a)
@@ -320,7 +320,7 @@ class CV(object):
             if alpha < 0: alpha = 90-alpha
             tangent = alpha + 90 # disc tangent    
             
-            # azimuth must be between 0 and 178, and less than 40 degrees from 
+            # azimuth must be between 0 and 178, and less than 80 degrees from 
             # disc tangent
             if (az < 0) or (az > 178) or (np.fabs(tangent-az) > slop):
                 raise Exception('invalid BS azimuth: %f' % az)
