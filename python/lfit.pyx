@@ -311,7 +311,7 @@ class CV(object):
             
         bsValid = True
         # check for valid BS parameters
-        slop = 40.0
+        slop = 55.0
         rd_a = rdisc*xl1
         try:
             x,y,vx,vy = roche.bspot(q,rd_a)
@@ -324,9 +324,9 @@ class CV(object):
             # disc tangent
             if (az < 0) or (az > 178) or (np.fabs(tangent-az) > slop):
                 raise Exception('invalid BS azimuth: %f' % az)
-        except:
+        except Exception as e:
             # if roche.bspot raises error, we didn't hit disc
-                raise Exception('Gas stream does not hit disc for q, rw = %f, %f' % (q,rdisc))
+            raise Exception('Gas stream does not hit disc for q, rw = %f, %f' % (q,rdisc))
 
         self.wd.tweak(rwd/xl1,ulimb)
         self.disc.tweak(q,rwd/xl1,rdisc,dexp)
