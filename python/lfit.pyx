@@ -1,6 +1,9 @@
-#cython: embedsignature=True
+# cython: embedsignature=True
+# cython: boundscheck=False
 # distutils: language = c++
-# distutils: sources = [../src/WhiteDwarf.cc, ../src/Disc.cc, ../src/BrightSpot.cc, ../src/Donor.cc, ../src/finddeg.cc]
+# distutils: sources = [./src/WhiteDwarf.cc, ./src/Disc.cc, ./src/BrightSpot.cc, ./src/Donor.cc, ./src/finddeg.cc]
+# cython: linetrace=True
+# distutils: define_macros=CYTHON_TRACE_NOGIL=1
 cimport numpy as np
 import numpy as np
 from libcpp cimport bool
@@ -38,7 +41,7 @@ cdef class PyDonor:
     def tweak(self,double q):
         self.thisptr.tweak(q)
     def calcFlux(self, double q, double incl, np.ndarray[np.double_t, ndim=1] phi, np.ndarray[np.double_t, ndim=1] width=None):
-        cdef unsigned n = phi.shape[0]
+        cdef unsigned int n = phi.shape[0]
         cdef unsigned int i
         phi = np.ascontiguousarray(phi)
         cdef np.ndarray[double, ndim=1] out = np.empty(n, dtype=np.double)
