@@ -8,9 +8,9 @@ import lfit
 import time
 import os
 
+    
 phi = np.linspace(-0.5,0.5,1000)
 width = np.mean(np.diff(phi))*np.ones_like(phi)/2.
-
 
 q = 0.1
 inc = 85.9
@@ -49,21 +49,20 @@ stop = time.time()
 print('C++ version took %f' % (stop-start))
 
 
-pars = [0.333,0.333,0.333,0.05,q,dphi,rdisc,0.4,rwd,scale,az,frac,rexp,0.0,exp1,exp2,tilt,yaw]
-#pars = [0.333,0.333,0.333,0.05,q,dphi,rdisc,0.4,rwd,scale,az,frac,rexp,0.0]
+pars = np.array([0.333,0.333,0.333,0.05,q,dphi,rdisc,0.4,rwd,scale,az,frac,rexp,0.0,exp1,exp2,tilt,yaw])
+#pars = np.array([0.333,0.333,0.333,0.05,q,dphi,rdisc,0.4,rwd,scale,az,frac,rexp,0.0])
 cv = lfit.CV(pars)
 flux2 = cv.calcFlux(pars,phi,width)
 
-flux = 0.3333*(ywd + yd + ys) + 0.05*yrs
-plt.plot(phi,0.33*ywd,'--b')
-plt.plot(phi,0.33*yd,'--r')
-plt.plot(phi,0.33*ys,'--g')
+flux = 0.333*(ywd + yd + ys) + 0.05*yrs
+plt.plot(phi,0.333*ywd,'--b')
+plt.plot(phi,0.333*yd,'--r')
+plt.plot(phi,0.333*ys,'--g')
 plt.plot(phi,0.05*yrs,'--y')
 plt.plot(phi,flux,'-r')
-plt.plot(phi,flux2,'--r',lw=2)
+plt.plot(phi,flux2,'-g')
 
 phi,flux,ywd,yd,ys,yrs = np.loadtxt('model.txt').T
 plt.plot(phi-1,flux,'--k')
-#plt.plot(phi-1,ys, '--k')
-#plt.ylim((0.0,1.1))
+plt.ylim((0.0,1.1))
 plt.show()
