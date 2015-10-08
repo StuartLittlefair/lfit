@@ -2,8 +2,6 @@
 # cython: boundscheck=False
 # distutils: language = c++
 # distutils: sources = [./src/WhiteDwarf.cc, ./src/Disc.cc, ./src/BrightSpot.cc, ./src/Donor.cc, ./src/finddeg.cc, ./src/Point.cc]
-# cython: linetrace=True
-# distutils: define_macros=CYTHON_TRACE_NOGIL=1
 cimport numpy as np
 import numpy as np
 from libcpp cimport bool
@@ -18,6 +16,7 @@ cdef extern from "Donor.h" namespace "LFIT":
         void tweak(double)
         double calcFlux(double,double)
         double calcFlux(double,double,double)
+        void setup_grid(double)
         double get_q()
         void set_q(double)
         int get_size()
@@ -44,6 +43,8 @@ cdef class PyDonor:
     def calcFlux(self, double q, double incl, np.ndarray[np.double_t, ndim=1] phi, np.ndarray[np.double_t, ndim=1] width=None):
         cdef unsigned int n = phi.shape[0]
         cdef unsigned int i
+        # setup grid
+        self.thisptr.setup_grid(incl)
         phi = np.ascontiguousarray(phi)
         cdef np.ndarray[double, ndim=1] out = np.empty(n, dtype=np.double)
         if width is not None:
@@ -142,6 +143,7 @@ cdef extern from "Disc.h" namespace "LFIT":
     cdef cppclass Disc:
         Disc(double, double, double, double, int) except +
         void tweak(double, double, double, double)
+        void setup_grid(double)
         double calcFlux(double, double, double)
         double calcFlux(double, double, double, double)
         
@@ -165,6 +167,7 @@ cdef class PyDisc:
     def calcFlux(self, double q, double incl, np.ndarray[np.double_t, ndim=1] phi, np.ndarray[np.double_t, ndim=1] width=None):
         cdef unsigned n = phi.shape[0]
         cdef unsigned int i
+        self.thisptr.setup_grid(incl)
         phi = np.ascontiguousarray(phi)
         cdef np.ndarray[double, ndim=1] out = np.empty(n, dtype=np.double)
         if width is not None:
