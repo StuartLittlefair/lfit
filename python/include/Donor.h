@@ -4,76 +4,29 @@
 #include "trm/array1d.h"
 #include "trm/vec3.h"
 #include "trm/roche.h"
+#include "Point.h"
 
 namespace LFIT{
 
-
-    bool blink2(const double& q, const Subs::Vec3& p, const Subs::Vec3& phat);
-    
-    bool blink3(const double& q, const Subs::Vec3& p, const Subs::Vec3& phat);
-
-    //! Structure defining a single element
-    /** This defines the position, area, direction, gravity and brightness of an element
-     * and also any phases during which it is eclipsed.
-     */
-    struct DonorEl {
-
-        //! Default constructor
-        DonorEl() : pos(), norm(), area(0.), gravity(1.), bright(0.), vis(0.) {}
-
-        //! Constructor
-        DonorEl(const Subs::Vec3& pos_, const Subs::Vec3& norm_, double area_, 
-              double gravity_, double bright_, double vis_) : 
-        pos(pos_), norm(norm_), area(area_), gravity(gravity_), 
-        bright(bright_), vis(vis_) {}
-
-        //! Position vector of element (units of binary separation)
-        Subs::Vec3 pos;
-
-        //! Outward facing direction of element (unit vector)
-        Subs::Vec3 norm;
-
-        //! Area of element (units of binary separation**2)
-        double area;
-
-        //! Gravity of element 
-        double gravity;
-
-        //! Brightness
-        double bright;
-
-        //! Visible? if so, projected area
-        double vis;
-    };
-    
-    // Dummy ASCII input operator to allow DonorEl's to be put in Buffer1D's
-    std::istream& operator>>(std::istream& s, const DonorEl& p);
-    
-    
-    // Dummy ASCII output operator to allow use of Buffer1D
-    std::ostream& operator<<(std::ostream& s, const DonorEl& p);
-    
-    
     class Donor{
         
     public:
         //! Default constructor
         Donor() : tiles(), beta(0.08), gmin(), ulimb(0.9),
-        q_old(1.0e30),phi_old(1.0e30),incl_old(1.0e30){}
+        q(1.0e30), ntiles(400){}
         //! Constructor
-        Donor(const double& q, const size_t& size) : tiles(),beta(0.08),
-        gmin(),ulimb(0.9),q_old(1.0e30),phi_old(1.0e30),incl_old(1.0e30){
-            tiles.resize(size);
-            this->tweak(q);
+        Donor(const double& q_, const size_t& size) : tiles(),beta(0.08),
+        gmin(),ulimb(0.9),q(1.0e30),ntiles(size){
+            this->tweak(q_);
         }
         void tweak(const double& q);
-        void setVis(const double& phi, const double& incl);
         double calcFlux(const double& phi, const double& incl);
         double calcFlux(const double& phi, const double& width,
                         const double& incl);
+        void setup_grid(const double& incl);
         Subs::Buffer1D<double> getBright();
         double get_q(){
-            return this->q_old;
+            return this->q;
         }
         void set_q(double q){
             this->tweak(q);
@@ -83,16 +36,16 @@ namespace LFIT{
         }
         void set_size(int size){
             this->tiles.resize(size);
-            this->tweak(this->q_old);
+            this->ntiles = size;
+            this->tweak(this->q);
         }
     private:
-        Subs::Buffer1D<DonorEl> tiles;
+        Subs::Buffer1D<LFIT::Point> tiles;
         double beta; 
         double gmin; 
         double ulimb; 
-        double q_old;
-        double phi_old;
-        double incl_old;
+        double q;
+        int ntiles;
     };
 
     //! Function object to compute Roche potential and its derivative

@@ -5,6 +5,9 @@
 #include "trm/vec3.h"
 #include "trm/roche.h"
 
+#ifndef __POINT_H_INCLUDED__   // if x.h hasn't been included yet...
+#define __POINT_H_INCLUDED__   //   #define this so the compiler knows it has been included
+
 namespace LFIT {
     struct Point {
 
@@ -58,3 +61,5 @@ namespace LFIT {
     // Dummy ASCII output operator to allow use of Buffer1D
     std::ostream& operator<<(std::ostream& s, const Point& p);
 }
+
+#endif
