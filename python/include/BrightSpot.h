@@ -13,6 +13,7 @@
 #include "trm/vec3.h"
 #include "trm/roche.h"
 #include "lfit_params.h"
+#include "Point.h"
 
 namespace LFIT{
     
@@ -20,13 +21,14 @@ namespace LFIT{
     public:
         //! Default Constructor
         BrightSpot() : complex(false),q(1.0e30),rd(1.0e30),az(),frac(),scale(),
-			exp1(),exp2(),tilt(),yaw(),x(),y(){}
+			exp1(),exp2(),tilt(),yaw(),x(),y(),nspot(300),spot(){
+			}
         
         //! Constructor from all parameters needed, including
         // mass ratio, q and disc radius in units of XL1
         BrightSpot(const LFIT::Params& params) : 
 		complex(params.complexSpot),q(params.q),rd(params.rd),az(params.bsAz),frac(params.bsFrac),
-		scale(params.bsScale){
+		scale(params.bsScale),nspot(300),spot(){
 			if (this->complex){
 				this->exp1 = params.bsExp1;
 				this->exp2 = params.bsExp2;
@@ -56,6 +58,7 @@ namespace LFIT{
         
         double   calcFlux(const double& q, const double& phi, const double& incl);
 		double simpleFlux(const double& q, const double& phi, const double& incl);
+		void   setup_grid(const double& incl);
         double   calcFlux(const double& q, const double& phi, const double& width,
                         const double& incl);
 	    double getTangent() const;
@@ -72,5 +75,7 @@ namespace LFIT{
 		double yaw; // yaw of non-planar strip around planar strip
 		double x; // x position of spot (z is zero cos spot is in plane)
 		double y; // y position of spot
+		int    nspot; // number of positions along spot
+		Subs::Buffer1D<LFIT::Point> spot; // buffer of point objects
     };
 }

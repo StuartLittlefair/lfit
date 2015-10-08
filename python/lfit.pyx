@@ -1,7 +1,7 @@
 # cython: embedsignature=True
 # cython: boundscheck=False
 # distutils: language = c++
-# distutils: sources = [./src/WhiteDwarf.cc, ./src/Disc.cc, ./src/BrightSpot.cc, ./src/Donor.cc, ./src/finddeg.cc]
+# distutils: sources = [./src/WhiteDwarf.cc, ./src/Disc.cc, ./src/BrightSpot.cc, ./src/Donor.cc, ./src/finddeg.cc, ./src/Point.cc]
 # cython: linetrace=True
 # distutils: define_macros=CYTHON_TRACE_NOGIL=1
 cimport numpy as np
@@ -9,6 +9,7 @@ import numpy as np
 from libcpp cimport bool
 from cython.operator cimport dereference as deref
 from trm import roche
+
 
 ############## Donor #######################   
 cdef extern from "Donor.h" namespace "LFIT":
@@ -67,6 +68,7 @@ cdef extern from "BrightSpot.h" namespace "LFIT":
         double calcFlux(double,double,double)
         double calcFlux(double,double,double,double)
         double getTangent()
+        void setup_grid(double)
 
 def rebuild_PySpot(q,rd,az,frac,scale,complex=False,exp1=2.0,exp2=1.0,tilt=90.0,yaw=1.0):
     return PySpot(q,rd,az,frac,scale,complex,exp1,exp2,tilt,yaw)
@@ -125,6 +127,7 @@ cdef class PySpot:
         cdef unsigned int i
         phi = np.ascontiguousarray(phi)
         cdef np.ndarray[double, ndim=1] out = np.empty(n, dtype=np.double)
+        self.thisptr.setup_grid(incl)
         if width is not None:
             width = np.ascontiguousarray(width)
             for i in range(n):
@@ -337,7 +340,7 @@ class CV(object):
         if self.complex:
             self.spot.tweak(q,rdisc,az,fis,scale,self.complex,exp1,exp2,tilt,yaw)
         else:
-            self.spot.tweak(q,rdisc,az,fis,scale)
+            self.spot.tweak(q,rdisc,az,fis,scale,self.complex)
         self.ywd = wdFlux*self.wd.calcFlux(q,inc,phi-phi0,width)
         self.yd  = dFlux*self.disc.calcFlux(q,inc,phi-phi0,width)
         self.ys  = sFlux*self.spot.calcFlux(q,inc,phi-phi0,width)

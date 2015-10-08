@@ -10,14 +10,14 @@
 #include "BrightSpot.h"
 #include <cmath>
 #include <string>
+#include <stdexcept>
 #include "trm/subs.h"
 #include "trm/array1d.h"
 #include "trm/vec3.h"
 #include "trm/roche.h"
 #include "trm/constants.h"
 
-double LFIT::BrightSpot::calcFlux(const double& q, const double& phi,
-const double& width, const double& incl){
+double LFIT::BrightSpot::calcFlux(const double& q, const double& phi, const double& width, const double& incl){
     /* 
      computes flux of bright spot relative to flux outside
      eclipse.
@@ -29,7 +29,7 @@ const double& width, const double& incl){
     double bflux=0.0;
     int nphi = 5;
 	//#pragma omp parallel for reduction(+:bflux)
-    for(int i=0; i<5; i++){
+    for(int i=0; i<nphi; i++){
         double p = phi1 + width*double(i)/double(nphi-1);
         if(i == 0 || i == nphi-1){
             bflux += LFIT::BrightSpot::calcFlux(q,p,incl)/2.0;
@@ -146,18 +146,19 @@ double LFIT::BrightSpot::simpleFlux(const double& q,const double& phi, const dou
     return bflux;
 }
 
-double LFIT::BrightSpot::calcFlux(const double& q,const double& phi, const double& incl){
-	
-	// SIMPLE: do old-style LFIT calculation with single bright spot strip hard-coded to exponent of 2
-	if (!complex){return LFIT::BrightSpot::simpleFlux(q,phi,incl);}
-	
+void LFIT::BrightSpot::setup_grid( const double& incl ){
+    if (!this->complex){
+        return;
+    }
+    
+    std::cout << "Setting up grid" <<std::endl;
 	// NOT SIMPLE - shamelessly ripped off from Tom Marsh's LCURVE
 	double theta = Constants::TWOPI*this->az/360.0;
 	double alpha = Constants::TWOPI*this->yaw/360.0;
 	double tilt_spot  = Constants::TWOPI*this->tilt/360.0;
 	
 	// the direction of the bright spot line is set by az, but the beaming direction adds in yaw as well
-	Subs::Vec3 posn, dirn, bvec(cos(theta),sin(theta),0), earth;
+	Subs::Vec3 posn, bvec(cos(theta),sin(theta),0);
 	Subs::Vec3 pvec(0,0,1), tvec(sin(tilt_spot)*sin(theta+alpha), -sin(tilt_spot)*cos(theta+alpha), cos(tilt_spot));
 	
 	// position of bright spot
@@ -166,45 +167,80 @@ double LFIT::BrightSpot::calcFlux(const double& q,const double& phi, const doubl
 	// length of bright spt in scale lengths
 	const double BMAX = pow(this->exp1/this->exp2,1.0/this->exp2);
 	const double SFAC = 20.0 + BMAX;
+
+	// create buffer of point objects
+	int nspot = this->nspot;
+	this->spot.resize(nspot*2);
 	
-	// first find maximum bright spot flux phase - assumed to be out of eclipse, and when spot is facing towards us.
+	// setup point objects, including their ingress/egress phases
+	const double AREA   = SFAC*this->scale*this->scale/(nspot-1);
+    LFIT::Point::etype eclipses;
+    
+	for(int i=0; i<nspot; i++){
+        // spot position
+	    double dist = SFAC*i/(nspot-1);
+	    posn = bspot + this->scale*(dist-BMAX)*bvec;
+	    
+	    // ingress, egress phases
+	    eclipses.clear();
+        double ingress, egress;
+        if (Roche::ingress_egress(q, Roche::SECONDARY, 1.0, 1.0, incl, 1.0e-5, posn, ingress, egress)){
+            eclipses.push_back(std::make_pair(ingress,egress));
+        }
+
+        // Factor here is adjusted to equal 1 at its peak
+        double bright = pow(dist/BMAX,this->exp1)*exp(this->exp1/this->exp2 - pow(dist,this->exp2));
+        
+        // the tilted strip
+        this->spot[i]      = LFIT::Point(posn,tvec,AREA,eclipses);
+        this->spot[i].flux = bright*(1.0-this->frac)*this->spot[i].area;
+
+        // the parallel strip
+        this->spot[i+nspot]      = LFIT::Point(posn,pvec,AREA,eclipses);
+        this->spot[i+nspot].flux = bright*this->frac*this->spot[i].area;
+    } 
+}
+
+double LFIT::BrightSpot::calcFlux(const double& q,const double& phi, const double& incl){
+	
+	// SIMPLE: do old-style LFIT calculation with single bright spot strip hard-coded to exponent of 2
+	if (!this->complex){return LFIT::BrightSpot::simpleFlux(q,phi,incl);}
+	
+    //  IS  CALLED WITH SPOT UNCALCULATED?
+    if (this->spot.size() == 0){
+        std::cout << "This shouldn't happen" <<std::endl;
+        this->setup_grid(incl);
+    }
+
+    // first find maximum bright spot flux phase - assumed to be out of eclipse, and when spot is facing towards us.
+    double theta = Constants::TWOPI*this->az/360.0;
+	double alpha = Constants::TWOPI*this->yaw/360.0;
 	double tanMaxPhi = 1.0/tan(theta+alpha);
 	double MaxPhi = atan(tanMaxPhi)/Constants::PI/2.0; //lies between -1/2 and 1/2
 	if(MaxPhi < 0.0){MaxPhi = 1.0+MaxPhi;}
 	
 	// calculate max flux
-	earth=Roche::set_earth(incl,MaxPhi);
-	double projTilted   = std::max(0.0,Subs::dot(tvec,earth));
-	double maxProj = projTilted;
-	int nspot=300;
-	Subs::Vec3 xp;
-	
-	double maxflux=0.0;
-	for(int i=0; i<nspot; i++){
-		double dist = SFAC*i/(nspot-1);
-		xp = bspot + this->scale*(dist-BMAX)*bvec;
-		// assume Bspot out of eclipse, so no need to blink here
-		double bright = pow(dist/BMAX,this->exp1)*exp(this->exp1/this->exp2 - pow(dist,this->exp2));
-		maxflux += projTilted*bright*(1.0-this->frac);
-		maxflux += maxProj*bright*this->frac;			
-	}
-	//std::cout << "Max flux is: " << maxflux << " , at phase " << MaxPhi << std::endl;
-	
-	// now find actual flux at this phase
-	earth=Roche::set_earth(incl,phi);
-	projTilted   = std::max(0.0,Subs::dot(tvec,earth));
-	double projParallel = std::max(0.0,Subs::dot(pvec,earth));
-	double bflux=0.0;
+	Subs::Vec3 earthmax, earthact, tvec;
+	double mumax, muact, maxProj;
+	double bflux=0,maxflux=0;
+	earthmax=Roche::set_earth(incl,MaxPhi);
+	earthact=Roche::set_earth(incl,phi);
+	// first element of spot is from tilted strip, so
+	tvec = this->spot[0].dirn;
+	maxProj = Subs::dot(tvec,earthmax);
 
-	for(int i=0; i<nspot; i++){
-		double dist = SFAC*i/(nspot-1);
-		xp = bspot + this->scale*(dist-BMAX)*bvec;
-		
-		if(!Roche::blink(q,xp,earth,0.05)){
-			double bright = pow(dist/BMAX,this->exp1)*exp(this->exp1/this->exp2 - pow(dist,this->exp2));
-			if(projTilted > 0.0) {bflux += projTilted*bright*(1.0-this->frac);}
-			if(projParallel > 0.0) {bflux += maxProj*bright*this->frac;}		// this should be multiplied by something so frac is truly correct	
-		}
+    for(int i=0; i<this->spot.size(); i++){
+        mumax = Subs::dot(this->spot[i].dirn,earthmax);
+        muact = Subs::dot(this->spot[i].dirn,earthact);       
+        if(i<nspot){
+            // tilted strip
+            if(mumax > 0. && this->spot[i].visible(MaxPhi)) maxflux += mumax*this->spot[i].flux;
+            if(muact > 0. && this->spot[i].visible(phi)) bflux += muact*this->spot[i].flux;
+        }else{
+            // parallel strip
+            if(mumax > 0. && this->spot[i].visible(MaxPhi)) maxflux += maxProj*this->spot[i].flux;
+            if(muact > 0. && this->spot[i].visible(phi)) bflux += maxProj*this->spot[i].flux;            
+        }
 	}
 	return bflux/maxflux;
 }
@@ -219,71 +255,14 @@ void LFIT::BrightSpot::spotPos(const double& q, const double& rd){
      RD = radius of disc/XL1
      Calculates X,Y position of spot in units of XL1
      */
-    static double eps = 1.0e-8;
-    static double acc = 1.0e-5;
-    
-    double smax,vel,ttry,tdid,time,tnext;
-    
+
     double xl1 = Roche::xl1(q);
     double rtest = rd*xl1;
     
     Subs::Vec3 r,v;
     Roche::strinit(q,r,v);
-    time = 0.0;
-    
-    Subs::Vec3 r0(r),v0(v); // store original pos and vel.
-    
-    //integrate stream until inside disc
-    double rold = xl1;
-    double rad;
-    double step=1.0e-3;
-    ttry = 1.0e-3;
-    smax = std::min(1.0e-3,step/2.0);
-    while(true){
-        Roche::gsint(q,r,v,ttry,tdid,tnext,time,eps);
-        vel = sqrt(Subs::sqr(v.x()) + Subs::sqr(v.y()));
-        ttry = std::min(smax/vel,tnext);
-        
-        rad = sqrt(Subs::sqr(r.x()) + Subs::sqr(r.y()));
-        if(rad > rold){
-            std::string err="error in spotPos";
-            throw err;
-        }else if(rad>rtest){
-            rold=rad;
-            r0=r;
-            v0=v;
-        }else{
-            break;
-        }
-    }
-    
-    // now we have one point with r > rd and one with r < rd
-    // with a time step of tdid separating them
-    double d1=0.0;
-    double d2=tdid;
-    double r1=rold;
-    double r2=rad;
-    ttry = tdid;
-    while(true){
-        r=r0;
-        v=v0;
-        double d=(d1+d2)/2.0;
-        Roche::gsint(q,r,v,d,tdid,tnext,time,eps);
-        vel = sqrt(Subs::sqr(v.x()) + Subs::sqr(v.y()));
-        ttry = std::min(smax/vel,tnext);
-    
-        rad = sqrt(Subs::sqr(r.x()) + Subs::sqr(r.y()));
-        if(rad > rtest){
-            d1=tdid;
-            r1=rad;
-        }else{
-            d2=tdid;
-            r2=rad;
-        }
-        if(fabs(r1-r2) < acc){
-            break;
-        }
-    }
+    Roche::stradv(q,r,v,rtest,1.0e-10,1.0e-3);
     this->x = r.x();
     this->y = r.y();
 }
+
