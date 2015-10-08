@@ -39,7 +39,6 @@ void LFIT::Donor::setup_grid(const double& incl){
     // solve to find critical potential along b....
     double t = Subs::rtsafe(Lfunc(a,b,q,cpot),t1,t2,1.0e-6);
     double xback = 1.0+t; // x-coord of back of donor
-    std::cout << "x pos of back of donor: " << xback << std::endl;
     
     //also find pole
     b.set(0.0,0.0,1.0);
@@ -51,7 +50,6 @@ void LFIT::Donor::setup_grid(const double& incl){
     // calculate derivative of roche potential at pole
     Subs::Vec3 grad = Roche::drpot(q,pole);
     this->gmin = grad.length();
-    std::cout << "Gravity at pole: " << grad.length() << std::endl;
     
     // OK, let's make the roche surface
     int icount=-1;
