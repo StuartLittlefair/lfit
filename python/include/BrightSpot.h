@@ -38,6 +38,21 @@ namespace LFIT{
             this->spotPos(params.q,params.rd);
         }
         
+        //! Constructor from all parameters needed, including
+        // mass ratio, q and disc radius in units of XL1
+        // allows custom sizing
+        BrightSpot(const LFIT::Params& params, const size_t& nspot_) : 
+		complex(params.complexSpot),q(params.q),rd(params.rd),az(params.bsAz),frac(params.bsFrac),
+		scale(params.bsScale),nspot(nspot_),spot(){
+			if (this->complex){
+				this->exp1 = params.bsExp1;
+				this->exp2 = params.bsExp2;
+				this->tilt = params.bsTilt;
+				this->yaw  = params.bsYaw;
+			}
+            this->spotPos(params.q,params.rd);
+        }        
+        
         void tweak(const LFIT::Params& params){
             this->az = params.bsAz;
             this->frac = params.bsFrac;
@@ -52,6 +67,8 @@ namespace LFIT{
 				this->spotPos(params.q,params.rd);
 				this->q = params.q; this->rd = params.rd;
 			}
+			// empty spot elements so a recompute is needed
+			this->spot.clear();
         } 
         
         void spotPos(const double& q, const double& rd);
