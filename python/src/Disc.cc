@@ -16,21 +16,13 @@
 #include "trm/roche.h"
 #include "trm/constants.h"
 
-std::istream& LFIT::operator>>(std::istream& s, const DiscEl& el){
-    std::string err = "Calling LFIT::operator >> with DonorEl is an error";
-    throw err;
-}
-std::ostream& LFIT::operator<<(std::ostream& os, const DiscEl& el){
-    std::string err = "Calling LFIT::operator << with DonorEl is an error";
-    throw err;
-}
-
-bool LFIT::Disc::paramsChanged(const double& q, const double& rwd, const double& rdisc,
+bool LFIT::Disc::paramsChanged(const double& q_, const double& rwd, const double& rdisc,
                    const double& exp_){
 
-	double xl1 = Roche::xl1(q);
+	double xl1 = Roche::xl1(q_);
 	double rinCheck = rwd*xl1; double routCheck = rdisc*xl1; 
 	if(this->exp != exp_ or this->rin != rinCheck or this->rout != routCheck){
+	    this->q  = q_;
 		this->exp = exp_;
 		this->rin = rinCheck;
 		this->rout = routCheck;
@@ -45,54 +37,58 @@ void LFIT::Disc::tweak(const double& q, const double& rwd, const double& rdisc,
 	if (not paramsChanged(q,rwd,rdisc,exp_)){
 		return;
 	}
-    
+    this->tiles.clear();
+}
+
+void LFIT::Disc::setup_grid(const double& incl){
+
     int nrad, ntheta;
-    // let's fill the grid
-    nrad = int(sqrt(this->tiles.size()));
-    ntheta = nrad;
+
+    // let's create the grid
+    // we need more elements at smaller radii, since that's where most flux comes
+    // from, but total number of elements must equal ntiles.
+    // if ntheta = 2*nrad - i
+    // total number of tiles = 0.5*nrad*(3*nrad+1)
+    // nrad = (-1 + sqrt(1 + 24*ntiles) ) / 6
+    nrad = int((-1 + sqrt(1 +24*this->ntiles))/6);
+    
+
+    // now let's set it up
     int icount=-1;
     double delta_r = (this->rout - this->rin)/double(nrad);
+    LFIT::Point::etype eclipses;
     for (int i=0; i<nrad; ++i){
         double r = this->rin + (this->rout - this->rin)*double(i+1)/double(nrad);
+        
+        ntheta = 2*nrad - i;
         for(int j=0; j<ntheta;++j){
             icount++;
             double theta = Constants::TWOPI*double(j)/double(ntheta);
-            this->tiles[icount].pos.set(r*cos(theta),r*sin(theta),0.0);
-            this->tiles[icount].norm.set(0.0,0.0,1.0);
+                
+            Subs::Vec3 posn = Subs::Vec3(r*cos(theta),r*sin(theta),0.0);
+            Subs::Vec3 dirn = Subs::Vec3(0.0,0.0,1.0);
+
             // area is r*dtheta*dr
-            this->tiles[icount].area = r*delta_r*Constants::TWOPI/double(ntheta);
+            double area = r*delta_r*Constants::TWOPI/double(ntheta);
             
             // nominal reference flux is used here. The disc's light will later be normalised
             // to 1 out of eclipse
-            this->tiles[icount].bright = pow(r/this->rout,-this->exp); 
-            // visibility is set later
-            this->tiles[icount].vis=0.0;
+            double flux = pow(r/this->rout,-this->exp); 
+
+            // ingress, egress phases
+            eclipses.clear();
+            double ingress, egress;
+            if (Roche::ingress_egress(this->q, Roche::SECONDARY, 1.0, 1.0, incl, 1.0e-5, posn, ingress, egress)){
+                eclipses.push_back(std::make_pair(ingress,egress));
+            }     
+            
+            this->tiles.push_back(LFIT::Point(posn,dirn,area,eclipses));
+            this->tiles[icount].flux = flux;        
         }
     }
 }
 
-void LFIT::Disc::setVis(const double& q, const double& phi, const double& incl){
-    
-    Subs::Vec3 earth;
-    earth=Roche::set_earth(incl,phi);
-    //#pragma omp parallel for 
-    for(int i=0; i<this->tiles.size(); ++i){
-        double dotP = Subs::dot(earth,this->tiles[i].norm); // projected area
-        if(dotP < 0.0){
-            std::string err = "Shouldn't get invisible disc elements";
-            throw err;
-        }
-        if(Roche::blink(q,this->tiles[i].pos,earth,0.05)){
-            // eclipsed, so not visible
-            this->tiles[i].vis = 0.0;
-        }else{
-            this->tiles[i].vis = fabs(dotP);
-        }
-    }
-}
-
-double LFIT::Disc::calcFlux(const double& q, const double& phi, 
-                            const double& width, const double& incl){
+double LFIT::Disc::calcFlux(const double& q, const double& phi,const double& width, const double& incl){
 
     /* 
      computes flux of disc relative to flux outside
@@ -115,27 +111,41 @@ double LFIT::Disc::calcFlux(const double& q, const double& phi,
     dflux /= double(nphi-1);
     
     return dflux;
-    
-    
 }
 
 double LFIT::Disc::calcFlux(const double& q, const double& phi, const double& incl){
     
-    
-    // maximum flux at phase 0.25 
-    this->setVis(q,0.25,incl);
-    double sum=0.0;
-	//#pragma omp parallel for reduction(+:sum) 
-    for(int i=0; i< this->tiles.size();i++){
-        sum+=this->tiles[i].bright*this->tiles[i].area*this->tiles[i].vis;
+    double static maxflux;
+    bool static first=true;
+
+    // have we been called without the tiles calculated
+    if (this->tiles.size() == 0){
+        std::cout << "LFIT::Disc::Calcflux shouldn't be called before calculating grid.\nThis is inefficient" << std::endl;
+        this->setup_grid(incl);   
     }
-    double maxflux = sum;
+        
+    // maximum flux at phase 0.25
+    if(first){
+        double maxphi = 0.25;
+        Subs::Vec3 earth = Roche::set_earth(incl,maxphi);
+        double sum = 0.0; 
+        for(int i=0; i< this->tiles.size();i++){
+            double mu = Subs::dot(earth,this->tiles[i].dirn);
+            if(mu > 0. && this->tiles[i].visible(maxphi)){
+                sum+=this->tiles[i].flux*this->tiles[i].area*mu;
+            }
+        }
+        first=false;
+        maxflux = sum;
+    }
     
-    this->setVis(q,phi,incl);
-    sum=0.0;
-	//#pragma omp parallel for reduction(+:sum)
+    Subs::Vec3 earth = Roche::set_earth(incl,phi);
+    double sum = 0.0; 
     for(int i=0; i< this->tiles.size();i++){
-        sum+=this->tiles[i].bright*this->tiles[i].area*this->tiles[i].vis;
+        double mu = Subs::dot(earth,this->tiles[i].dirn);
+        if(mu > 0. && this->tiles[i].visible(phi)){
+            sum+=this->tiles[i].flux*this->tiles[i].area*mu;
+        }
     }
     return sum/maxflux;
 }
