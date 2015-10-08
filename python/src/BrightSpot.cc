@@ -8,6 +8,7 @@
  */
 
 #include "BrightSpot.h"
+#include "Point.h"
 #include <cmath>
 #include <string>
 #include <stdexcept>
@@ -151,7 +152,6 @@ void LFIT::BrightSpot::setup_grid( const double& incl ){
         return;
     }
     
-    std::cout << "Setting up grid" <<std::endl;
 	// NOT SIMPLE - shamelessly ripped off from Tom Marsh's LCURVE
 	double theta = Constants::TWOPI*this->az/360.0;
 	double alpha = Constants::TWOPI*this->yaw/360.0;
