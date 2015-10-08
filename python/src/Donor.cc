@@ -79,17 +79,18 @@ void LFIT::Donor::setup_grid(const double& incl){
             Subs::Vec3 posn = a + t*b;
             // normal to tile is direction of derivative
             Subs::Vec3 dirn = Roche::drpot(q,posn);
+            double gravity = dirn.length();
             dirn.unit();
             
             
             // ingress, egress phases
-            eclipses.clear();
-            double ingress, egress;
-            if (Roche::ingress_egress(q, Roche::SECONDARY, 1.0, 1.0, incl, 1.0e-5, posn, ingress, egress)){
-                eclipses.push_back(std::make_pair(ingress,egress));
-            }            
+            //eclipses.clear();
+            //double ingress, egress;
+            //if (Roche::ingress_egress(q, Roche::SECONDARY, 1.0, 1.0, incl, 1.0e-5, posn, ingress, egress)){
+            //    eclipses.push_back(std::make_pair(ingress,egress));
+            //}            
                         
-            // we also need the element area, which is the cicumference
+            // we also need the element area, which is the circumference
             // of the roche lobe at this point, divided by the number
             // of theta steps, and multiplied by delta_x/cos(alpha),
             // where alpha is angle between element and x-axis
@@ -99,10 +100,8 @@ void LFIT::Donor::setup_grid(const double& incl){
             double area = delta_x*Constants::TWOPI*t/double(np)/cos_alpha;
 
             // now set temperature of element, scaling for limb and gravity darkening
-           double gravity = b.length();
-
             // temp should be multiplied by pow(grav/gmin,beta)
-            double temp = 3000.0*pow(this->tiles[i].gravity/this->gmin,this->beta);
+            double temp = 3000.0*pow(gravity/this->gmin,this->beta);
 
             // flux, not accounting for limb darkening
             double flux = Subs::planck(6560.0,temp);
@@ -151,15 +150,15 @@ double LFIT::Donor::calcFlux(const double& phi, const double& incl){
 
 	if(first){
 	    // maximum flux is at phi=0.75
-		double phi = 0.75;
-		Subs::Vec3 earth = Roche::set_earth(incl,phi);
+		double maxphi = 0.75;
+		Subs::Vec3 earth = Roche::set_earth(incl,maxphi);
 		double sum=0.0;
 	    //#pragma omp parallel for reduction(+:sum)
 		for(int i=0; i< this->tiles.size();i++){
             double mu = Subs::dot(earth,this->tiles[i].dirn);
-            if(mu > 0. && this->tiles[i].visible(phi)){
-                double flux = this->tiles[i].flux * (1.-this->ulimb+mu*this->ulimb);
-                sum+=flux*this->tiles[i].area;
+            if(mu > -0.01 && this->tiles[i].visible(maxphi)){
+                double flux = this->tiles[i].flux * (1.-this->ulimb+fabs(mu)*this->ulimb);
+                sum+=flux*this->tiles[i].area*mu;
             }
 		}
 		first = false;
@@ -171,9 +170,9 @@ double LFIT::Donor::calcFlux(const double& phi, const double& incl){
     //#pragma omp parallel for reduction(+:sum)
     for(int i=0; i< this->tiles.size();i++){
         double mu = Subs::dot(earth,this->tiles[i].dirn);
-        if(mu > 0. && this->tiles[i].visible(phi)){
-            double flux = this->tiles[i].flux * (1.-this->ulimb+mu*this->ulimb);
-            sum+=flux*this->tiles[i].area;
+        if(mu > -0.01 && this->tiles[i].visible(phi)){
+            double flux = this->tiles[i].flux * (1.-this->ulimb+fabs(mu)*this->ulimb);
+            sum+=flux*this->tiles[i].area*mu;
         }
     }
 
