@@ -20,12 +20,12 @@ namespace LFIT{
     class Disc{
     public:
         //!Default Constructor
-        Disc() : tiles(),ntiles(1000),q(),rin(),rout(),exp(){}
+        Disc() : tiles(),ntiles(1000),q(),rin(),rout(),exp(),normalisation(-1.0){}
         //!Constructor
         // rdisc is in units of xl1
         Disc(const double& q_, const double& rwd_, 
              const double& rd_, const double& exp_,
-             const size_t& size) : tiles(), ntiles(size){
+             const size_t& size) : tiles(), ntiles(size),normalisation(-1.0){
             this->tweak(q_,rwd_,rd_,exp_);
         }
 		
@@ -43,6 +43,7 @@ namespace LFIT{
         double rin;
         double rout;
         double exp; // flux scales as (r/rdisc)**-exp
+        double normalisation;
     };
     
     

@@ -13,10 +13,10 @@ namespace LFIT{
     public:
         //! Default constructor
         Donor() : tiles(), beta(0.08), gmin(), ulimb(0.9),
-        q(1.0e30), ntiles(400){}
+        q(1.0e30), ntiles(400), normalisation(-1.){}
         //! Constructor
         Donor(const double& q_, const size_t& size) : tiles(),beta(0.08),
-        gmin(),ulimb(0.9),q(1.0e30),ntiles(size){
+        gmin(),ulimb(0.9),q(1.0e30),ntiles(size),normalisation(-1.){
             this->tweak(q_);
         }
         void tweak(const double& q);
@@ -46,6 +46,7 @@ namespace LFIT{
         double ulimb; 
         double q;
         int ntiles;
+        double normalisation;
     };
 
     //! Function object to compute Roche potential and its derivative

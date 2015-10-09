@@ -219,7 +219,7 @@ double LFIT::BrightSpot::calcFlux(const double& q,const double& phi, const doubl
 	double MaxPhi = atan(tanMaxPhi)/Constants::PI/2.0; //lies between -1/2 and 1/2
 	if(MaxPhi < 0.0){MaxPhi = 1.0+MaxPhi;}
 	
-	// calculate max flux
+	// setup variables
 	Subs::Vec3 earthmax, earthact, tvec;
 	double mumax, muact, maxProj;
 	double bflux=0,maxflux=0;
@@ -229,20 +229,31 @@ double LFIT::BrightSpot::calcFlux(const double& q,const double& phi, const doubl
 	tvec = this->spot[0].dirn;
 	maxProj = Subs::dot(tvec,earthmax);
 
+    if(this->normalisation < 0.0){
+        for(int i=0; i<this->spot.size(); i++){
+            mumax = Subs::dot(this->spot[i].dirn,earthmax);
+            if(i<nspot){
+                // tilted strip
+                if(mumax > 0. && this->spot[i].visible(MaxPhi)) maxflux += mumax*this->spot[i].flux;
+            }else{
+                // parallel strip
+                if(mumax > 0. && this->spot[i].visible(MaxPhi)) maxflux += maxProj*this->spot[i].flux;
+            }
+        }
+        this->normalisation = maxflux;
+    }    
+
     for(int i=0; i<this->spot.size(); i++){
-        mumax = Subs::dot(this->spot[i].dirn,earthmax);
         muact = Subs::dot(this->spot[i].dirn,earthact);       
         if(i<nspot){
             // tilted strip
-            if(mumax > 0. && this->spot[i].visible(MaxPhi)) maxflux += mumax*this->spot[i].flux;
             if(muact > 0. && this->spot[i].visible(phi)) bflux += muact*this->spot[i].flux;
         }else{
             // parallel strip
-            if(mumax > 0. && this->spot[i].visible(MaxPhi)) maxflux += maxProj*this->spot[i].flux;
             if(muact > 0. && this->spot[i].visible(phi)) bflux += maxProj*this->spot[i].flux;            
         }
 	}
-	return bflux/maxflux;
+	return bflux/this->normalisation;
 }
 
 void LFIT::BrightSpot::spotPos(const double& q, const double& rd){

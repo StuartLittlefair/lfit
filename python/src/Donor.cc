@@ -17,6 +17,8 @@ void LFIT::Donor::tweak(const double& q_){
     this->q = q_;
     // we've changed the roche lobe, so empty the tiles array
     this->tiles.clear();
+    // also indicate we need to recalculate normalisation
+    this->normalisation = -1.;
 }
 
 void LFIT::Donor::setup_grid(const double& incl){
@@ -139,16 +141,13 @@ double LFIT::Donor::calcFlux(const double& phi, const double& width,
 
 double LFIT::Donor::calcFlux(const double& phi, const double& incl){
     
-	double static maxflux;
-	bool static first=true;
-
     // have we been called without the tiles calculated
     if (this->tiles.size() == 0){
         std::cout << "LFIT::Calcflux shouldn't be called before calculating grid.\nThis is inefficient" << std::endl;
         this->setup_grid(incl);   
     }
 
-	if(first){
+	if(this->normalisation < 0.0){
 	    // maximum flux is at phi=0.75
 		double maxphi = 0.75;
 		Subs::Vec3 earth = Roche::set_earth(incl,maxphi);
@@ -161,8 +160,7 @@ double LFIT::Donor::calcFlux(const double& phi, const double& incl){
                 sum+=flux*this->tiles[i].area*mu;
             }
 		}
-		first = false;
-		maxflux = sum;
+		this->normalisation = sum;
 	}
 	
     double sum=0.0;
@@ -176,7 +174,7 @@ double LFIT::Donor::calcFlux(const double& phi, const double& incl){
         }
     }
 
-    return sum/maxflux;
+    return sum/this->normalisation;
 }
 
    

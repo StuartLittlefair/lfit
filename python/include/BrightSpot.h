@@ -21,14 +21,14 @@ namespace LFIT{
     public:
         //! Default Constructor
         BrightSpot() : complex(false),q(1.0e30),rd(1.0e30),az(),frac(),scale(),
-			exp1(),exp2(),tilt(),yaw(),x(),y(),nspot(300),spot(){
+			exp1(),exp2(),tilt(),yaw(),x(),y(),nspot(300),spot(),normalisation(-1.){
 			}
         
         //! Constructor from all parameters needed, including
         // mass ratio, q and disc radius in units of XL1
         BrightSpot(const LFIT::Params& params) : 
 		complex(params.complexSpot),q(params.q),rd(params.rd),az(params.bsAz),frac(params.bsFrac),
-		scale(params.bsScale),nspot(300),spot(){
+		scale(params.bsScale),nspot(300),spot(),normalisation(-1.){
 			if (this->complex){
 				this->exp1 = params.bsExp1;
 				this->exp2 = params.bsExp2;
@@ -43,7 +43,7 @@ namespace LFIT{
         // allows custom sizing
         BrightSpot(const LFIT::Params& params, const size_t& nspot_) : 
 		complex(params.complexSpot),q(params.q),rd(params.rd),az(params.bsAz),frac(params.bsFrac),
-		scale(params.bsScale),nspot(nspot_),spot(){
+		scale(params.bsScale),nspot(nspot_),spot(),normalisation(-1.){
 			if (this->complex){
 				this->exp1 = params.bsExp1;
 				this->exp2 = params.bsExp2;
@@ -69,6 +69,8 @@ namespace LFIT{
 			}
 			// empty spot elements so a recompute is needed
 			this->spot.clear();
+			// indicate that normalisation needs recalculating
+			this->normalisation = -1.;
         } 
         
         void spotPos(const double& q, const double& rd);
@@ -94,5 +96,6 @@ namespace LFIT{
 		double y; // y position of spot
 		int    nspot; // number of positions along spot
 		Subs::Buffer1D<LFIT::Point> spot; // buffer of point objects
+		double normalisation; //maximum flux for normalising curve
     };
 }

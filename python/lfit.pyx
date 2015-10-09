@@ -273,7 +273,6 @@ class CV(object):
         The accretion disc and donor are broken into tiles covering their surface. You can
         override the defaults for these tiles by setting the nel_disc or nel_donor arguments.
         This can increase numerical accuracy at the expense of computing time'''
-        print('New CV created')
         assert (len(pars) == 18) or (len(pars) == 14)
         wdFlux,dFlux,sFlux,rsFlux,q,dphi,rdisc,ulimb,rwd,scale,az,fis,dexp,phi0 = pars[0:14]
         self.complex = False

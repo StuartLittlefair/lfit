@@ -40,7 +40,7 @@ yd  = d.calcFlux(q,inc,phi,width)
 ys  = s.calcFlux(q,inc,phi,width)
 yrs = rs.calcFlux(q,inc,phi,width)
 stop = time.clock()
-print('LFIT version took %f' % (stop-start))
+print('LFIT components took %f' % (stop-start))
 
 
 start = time.time()
@@ -51,9 +51,11 @@ print('C++ version took %f' % (stop-start))
 
 pars = np.array([0.333,0.333,0.333,0.05,q,dphi,rdisc,0.4,rwd,scale,az,frac,rexp,0.0,exp1,exp2,tilt,yaw])
 #pars = np.array([0.333,0.333,0.333,0.05,q,dphi,rdisc,0.4,rwd,scale,az,frac,rexp,0.0])
+start = time.time()
 cv = lfit.CV(pars)
 flux2 = cv.calcFlux(pars,phi,width)
-
+stop = time.time()
+print('LFIT CV took %f' % (stop-start))
 flux = 0.333*(ywd + yd + ys) + 0.05*yrs
 plt.plot(phi,0.333*ywd,'--b')
 plt.plot(phi,0.333*yd,'--r')

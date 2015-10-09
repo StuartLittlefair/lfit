@@ -38,6 +38,7 @@ void LFIT::Disc::tweak(const double& q, const double& rwd, const double& rdisc,
 		return;
 	}
     this->tiles.clear();
+    this->normalisation = -1.0;
 }
 
 void LFIT::Disc::setup_grid(const double& incl){
@@ -115,9 +116,6 @@ double LFIT::Disc::calcFlux(const double& q, const double& phi,const double& wid
 
 double LFIT::Disc::calcFlux(const double& q, const double& phi, const double& incl){
     
-    double static maxflux;
-    bool static first=true;
-
     // have we been called without the tiles calculated
     if (this->tiles.size() == 0){
         std::cout << "LFIT::Disc::Calcflux shouldn't be called before calculating grid.\nThis is inefficient" << std::endl;
@@ -125,7 +123,7 @@ double LFIT::Disc::calcFlux(const double& q, const double& phi, const double& in
     }
         
     // maximum flux at phase 0.25
-    if(first){
+    if(this->normalisation<0.0){
         double maxphi = 0.25;
         Subs::Vec3 earth = Roche::set_earth(incl,maxphi);
         double sum = 0.0; 
@@ -135,8 +133,7 @@ double LFIT::Disc::calcFlux(const double& q, const double& phi, const double& in
                 sum+=this->tiles[i].flux*this->tiles[i].area*mu;
             }
         }
-        first=false;
-        maxflux = sum;
+        this->normalisation = sum;
     }
     
     Subs::Vec3 earth = Roche::set_earth(incl,phi);
@@ -147,6 +144,6 @@ double LFIT::Disc::calcFlux(const double& q, const double& phi, const double& in
             sum+=this->tiles[i].flux*this->tiles[i].area*mu;
         }
     }
-    return sum/maxflux;
+    return sum/this->normalisation;
 }
 
