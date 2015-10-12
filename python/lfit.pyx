@@ -13,10 +13,10 @@ from trm import roche
 cdef extern from "Donor.h" namespace "LFIT":
     cdef cppclass Donor:
         Donor(double, int)
-        void tweak(double)
-        double calcFlux(double,double)
-        double calcFlux(double,double,double)
-        void setup_grid(double)
+        void tweak(double) 
+        double calcFlux(double,double) except+
+        double calcFlux(double,double,double) except+
+        void setup_grid(double) except+
         double get_q()
         void set_q(double)
         int get_size()
@@ -65,11 +65,11 @@ cdef extern from "BrightSpot.h" namespace "LFIT":
     cdef cppclass BrightSpot:
         BrightSpot(Params)
         void tweak(Params)
-        void spotPos(double,double) # calculates x and y location of spot
-        double calcFlux(double,double,double)
-        double calcFlux(double,double,double,double)
-        double getTangent()
-        void setup_grid(double)
+        void spotPos(double,double) except+# calculates x and y location of spot
+        double calcFlux(double,double,double) except+
+        double calcFlux(double,double,double,double) except+
+        double getTangent() except+
+        void setup_grid(double) except+
 
 def rebuild_PySpot(q,rd,az,frac,scale,complex=False,exp1=2.0,exp2=1.0,tilt=90.0,yaw=1.0):
     return PySpot(q,rd,az,frac,scale,complex,exp1,exp2,tilt,yaw)
@@ -142,10 +142,10 @@ cdef class PySpot:
 cdef extern from "Disc.h" namespace "LFIT":
     cdef cppclass Disc:
         Disc(double, double, double, double, int) except +
-        void tweak(double, double, double, double)
-        void setup_grid(double)
-        double calcFlux(double, double, double)
-        double calcFlux(double, double, double, double)
+        void tweak(double, double, double, double) except+
+        void setup_grid(double) except+
+        double calcFlux(double, double, double) except+
+        double calcFlux(double, double, double, double) except+
         
 def rebuild_PyDisc(q,rin,rout,exp,nelem=1000):
     return PyDisc(q,rin,rout,exp,nelem)    
@@ -188,9 +188,9 @@ cdef class PyDisc:
 cdef extern from "WhiteDwarf.h" namespace "LFIT":
     cdef cppclass WhiteDwarf:
         WhiteDwarf(double, double) except +
-        double calcFlux(double, double, double)
-        double calcFlux(double, double, double, double)
-        void tweak(double, double)
+        double calcFlux(double, double, double) except+
+        double calcFlux(double, double, double, double) except+
+        void tweak(double, double) except+
         double get_radius()
         void   set_radius(double)
         double get_ulimb()
