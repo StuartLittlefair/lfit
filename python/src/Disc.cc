@@ -78,11 +78,15 @@ void LFIT::Disc::setup_grid(const double& incl){
 
             // ingress, egress phases
             eclipses.clear();
-            double ingress, egress;
-            if (Roche::ingress_egress(this->q, Roche::SECONDARY, 1.0, 1.0, incl, 1.0e-5, posn, ingress, egress)){
-                eclipses.push_back(std::make_pair(ingress,egress));
-            }     
-            
+            double ingress, egress;   
+            try{
+                // sometimes dies with linmin error: assume this means no eclipse
+                if (Roche::ingress_egress(this->q, Roche::SECONDARY, 1.0, 1.0, incl, 1.0e-5, posn, ingress, egress)){
+                    eclipses.push_back(std::make_pair(ingress,egress));
+                }
+            }catch (Roche::Roche_Error) { 
+                /* do nothing here */  
+            }
             this->tiles.push_back(LFIT::Point(posn,dirn,area,eclipses));
             this->tiles[icount].flux = flux;        
         }
