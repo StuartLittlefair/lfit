@@ -1,3 +1,4 @@
+from __future__ import print_function
 from distutils.core import setup
 from Cython.Build import cythonize
 from distutils.extension import Extension
@@ -12,8 +13,8 @@ if 'TRM_SOFTWARE' in os.environ:
     library_dirs.append(os.path.join(os.environ['TRM_SOFTWARE'], 'lib'))
     include_dirs.append(os.path.join(os.environ['TRM_SOFTWARE'], 'include'))
 else:
-    print >>sys.stderr, "Environment variable TRM_SOFTWARE pointing to location of shareable libraries and includes not defined!"
-
+    print ("Environment variable TRM_SOFTWARE pointing to location of shareable libraries and includes not defined!",file=sys.stderr)
+    sys.exit(-1)
 include_dirs.append(numpy.get_include())
 
 ext_modules = [
