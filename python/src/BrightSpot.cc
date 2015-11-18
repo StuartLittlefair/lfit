@@ -185,14 +185,15 @@ void LFIT::BrightSpot::setup_grid( const double& incl ){
 	    eclipses.clear();
         double ingress, egress;
         
-        try{
+        //try{
             // sometimes dies with linmin error: assume this means no eclipse
-            if (Roche::ingress_egress(q, Roche::SECONDARY, 1.0, 1.0, incl, 1.0e-5, posn, ingress, egress)){
-                eclipses.push_back(std::make_pair(ingress,egress));
-            }
-        }catch (Roche::Roche_Error) { 
-            /* do nothing here */  
+        if (Roche::ingress_egress(q, Roche::SECONDARY, 1.0, 1.0, incl, 1.0e-5, posn, ingress, egress)){
+            eclipses.push_back(std::make_pair(ingress,egress));
         }
+        //}catch (Roche::Roche_Error) { 
+            /* do nothing here */
+        //    std::cout << "Roche error" << std::endl;  
+        //}
     
         // Factor here is adjusted to equal 1 at its peak
         double bright = pow(dist/BMAX,this->exp1)*exp(this->exp1/this->exp2 - pow(dist,this->exp2));

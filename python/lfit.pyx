@@ -8,7 +8,6 @@ from libcpp cimport bool
 from cython.operator cimport dereference as deref
 from trm import roche
 
-
 ############## Donor #######################   
 cdef extern from "Donor.h" namespace "LFIT":
     cdef cppclass Donor:
@@ -44,7 +43,10 @@ cdef class PyDonor:
         cdef unsigned int n = phi.shape[0]
         cdef unsigned int i
         # setup grid
-        self.thisptr.setup_grid(incl)
+        try:
+            self.thisptr.setup_grid(incl)
+        except:
+            raise ValueError("setup_grid failed with linmin error")
         phi = np.ascontiguousarray(phi)
         cdef np.ndarray[double, ndim=1] out = np.empty(n, dtype=np.double)
         if width is not None:
@@ -128,7 +130,10 @@ cdef class PySpot:
         cdef unsigned int i
         phi = np.ascontiguousarray(phi)
         cdef np.ndarray[double, ndim=1] out = np.empty(n, dtype=np.double)
-        self.thisptr.setup_grid(incl)
+        try:
+            self.thisptr.setup_grid(incl)
+        except:
+            raise ValueError("setup grid failed with linmin error")
         if width is not None:
             width = np.ascontiguousarray(width)
             for i in range(n):
@@ -167,7 +172,10 @@ cdef class PyDisc:
     def calcFlux(self, double q, double incl, np.ndarray[np.double_t, ndim=1] phi, np.ndarray[np.double_t, ndim=1] width=None):
         cdef unsigned n = phi.shape[0]
         cdef unsigned int i
-        self.thisptr.setup_grid(incl)
+        try:
+            self.thisptr.setup_grid(incl)
+        except:
+            raise ValueError("setup_grid failed with linmin error")
         phi = np.ascontiguousarray(phi)
         cdef np.ndarray[double, ndim=1] out = np.empty(n, dtype=np.double)
         if width is not None:
