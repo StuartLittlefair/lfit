@@ -290,8 +290,8 @@ class CV(object):
         xl1 = roche.xl1(q)
         incl = roche.findi(q,dphi)
         
-        self.wd = PyWhiteDwarf(rwd/xl1,ulimb)
-        self.disc = PyDisc(q,rwd/xl1,rdisc,dexp,nel_disc)
+        self.wd = PyWhiteDwarf(rwd,ulimb)
+        self.disc = PyDisc(q,rwd,rdisc,dexp,nel_disc)
         if self.complex:
             self.spot = PySpot(q,rdisc,az,fis,scale,exp1,exp2,tilt,yaw,self.complex)
         else:
@@ -345,8 +345,8 @@ class CV(object):
             # if roche.bspot raises error, we didn't hit disc
             raise ValueError('Gas stream does not hit disc for q, rw = %f, %f' % (q,rdisc))
 
-        self.wd.tweak(rwd/xl1,ulimb)
-        self.disc.tweak(q,rwd/xl1,rdisc,dexp)
+        self.wd.tweak(rwd,ulimb)
+        self.disc.tweak(q,rwd,rdisc,dexp)
         self.donor.tweak(q)
         if self.complex:
             self.spot.tweak(q,rdisc,az,fis,scale,self.complex,exp1,exp2,tilt,yaw)
