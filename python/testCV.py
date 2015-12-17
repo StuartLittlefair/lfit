@@ -16,7 +16,7 @@ q = 0.1
 inc = 85.9
 xl1 = roche.xl1(q) 
 dphi = roche.findphi(q,inc)
-rwd = 0.01 #r1_a
+rwd = 0.01 
 rdisc = 0.6
 rexp = 0.2
 az = 157.0
@@ -29,8 +29,8 @@ yaw = 1.0
 
 
 start = time.clock()
-w = lfit.PyWhiteDwarf(rwd/xl1,0.4)
-d = lfit.PyDisc(q,rwd/xl1,rdisc,rexp,1000)
+w = lfit.PyWhiteDwarf(rwd,0.4)
+d = lfit.PyDisc(q,rwd,rdisc,rexp,1000)
 #s = lfit.PySpot(q,rdisc,az,frac,scale)
 s = lfit.PySpot(q,rdisc,az,frac,scale,exp1=exp1,exp2=exp2,tilt=tilt,yaw=yaw,complex=True)
 rs = lfit.PyDonor(q,400)
