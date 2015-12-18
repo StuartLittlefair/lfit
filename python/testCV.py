@@ -9,7 +9,7 @@ import time
 import os
 
     
-phi = np.linspace(-0.5,0.5,1000)
+phi = np.linspace(-0.15,0.2,1000,endpoint=False)
 width = np.mean(np.diff(phi))*np.ones_like(phi)/2.
 
 q = 0.1
@@ -44,7 +44,7 @@ print('LFIT components took %f' % (stop-start))
 
 
 start = time.time()
-os.system("../lfit_fake gfit.in 0.333 0.333 0.333 0.05 0.5 1.5 1000")
+os.system("../lfit_fake gfit.in 0.333 0.333 0.333 0.05 0.85 1.2 1000")
 stop = time.time()
 print('C++ version took %f' % (stop-start))
 
@@ -53,18 +53,27 @@ pars = np.array([0.333,0.333,0.333,0.05,q,dphi,rdisc,0.4,rwd,scale,az,frac,rexp,
 #pars = np.array([0.333,0.333,0.333,0.05,q,dphi,rdisc,0.4,rwd,scale,az,frac,rexp,0.0])
 start = time.time()
 cv = lfit.CV(pars)
-flux2 = cv.calcFlux(pars,phi,width)
+flux2 = cv.calcFlux(pars,phi)
 stop = time.time()
 print('LFIT CV took %f' % (stop-start))
 flux = 0.333*(ywd + yd + ys) + 0.05*yrs
-plt.plot(phi,0.333*ywd,'--b')
-plt.plot(phi,0.333*yd,'--r')
-plt.plot(phi,0.333*ys,'--g')
-plt.plot(phi,0.05*yrs,'--y')
-plt.plot(phi,flux,'-r')
-plt.plot(phi,flux2,'-g')
+
+fig, ax = plt.subplots(2,1,sharex=True,gridspec_kw={'height_ratios':[2,1]})
+ax1 = ax[0]
+ax2 = ax[1]
+ax1.plot(phi,0.333*ywd,'--b')
+ax1.plot(phi,0.333*yd,'--r')
+ax1.plot(phi,0.333*ys,'--g')
+ax1.plot(phi,0.05*yrs,'--y')
+ax1.plot(phi,flux2,'-g',label='Python')
 
 phi,flux,ywd,yd,ys,yrs = np.loadtxt('model.txt').T
-plt.plot(phi-1,flux,'--k')
-plt.ylim((0.0,1.1))
+ax1.plot(phi-1,flux,'--k',label='C++')
+ax1.set_ylim((0.0,1.1))
+ax1.legend()
+
+ax2.plot(phi-1,(flux-flux2)/flux2)
+#ax2.plot(phi-1,cv.ywd,label='Python')
+#ax2.plot(phi-1,ywd,label='C++')
+#ax2.legend()
 plt.show()
