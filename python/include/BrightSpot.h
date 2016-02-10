@@ -74,7 +74,8 @@ namespace LFIT{
         } 
         
         void spotPos(const double& q, const double& rd);
-        
+        int getNspot();
+        void setNspot(int nelem);
         double   calcFlux(const double& q, const double& phi, const double& incl);
 		double simpleFlux(const double& q, const double& phi, const double& incl);
 		void   setup_grid(const double& incl);

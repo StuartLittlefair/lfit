@@ -18,6 +18,14 @@
 #include "trm/roche.h"
 #include "trm/constants.h"
 
+void LFIT::BrightSpot::setNspot(int nelem){
+    this->nspot = nelem;
+}
+
+int LFIT::BrightSpot::getNspot(){
+    return this->nspot;
+}
+
 double LFIT::BrightSpot::calcFlux(const double& q, const double& phi, const double& width, const double& incl){
     /* 
      computes flux of bright spot relative to flux outside
@@ -167,6 +175,9 @@ void LFIT::BrightSpot::setup_grid( const double& incl ){
 	// length of bright spt in scale lengths
 	const double BMAX = pow(this->exp1/this->exp2,1.0/this->exp2);
 	const double SFAC = 20.0 + BMAX;
+
+    // the scaling of nspot below is tuned to give reasonable results
+    this->nspot = std::max(200,int(200*this->scale/0.02));
 
 	// create buffer of point objects
 	int nspot = this->nspot;

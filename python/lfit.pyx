@@ -72,6 +72,8 @@ cdef extern from "BrightSpot.h" namespace "LFIT":
         double calcFlux(double,double,double,double) except+
         double getTangent() except+
         void setup_grid(double) except+
+        int getNspot()
+        void setNspot(int)
 
 def rebuild_PySpot(q,rd,az,frac,scale,complex=False,exp1=2.0,exp2=1.0,tilt=90.0,yaw=1.0):
     return PySpot(q,rd,az,frac,scale,complex,exp1,exp2,tilt,yaw)
@@ -124,6 +126,13 @@ cdef class PySpot:
         
     def getTangent(self):
         return self.thisptr.getTangent()
+        
+    property nspot:
+        def __get__(self):
+            return self.thisptr.getNspot()
+
+        def __set__(self,nelem):
+            self.thisptr.setNspot(nelem)
         
     def calcFlux(self, double q, double incl, np.ndarray[np.double_t, ndim=1] phi, np.ndarray[np.double_t, ndim=1] width=None):
         cdef unsigned n = phi.shape[0]
