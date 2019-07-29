@@ -204,7 +204,7 @@ void LFIT::BrightSpot::setup_grid( const double& incl ){
             eclipses.push_back(std::make_pair(ingress,egress));
             std::cout << "(" << ingress << ", " << egress << ")...";
         }else{
-            std::cout << "no eclipses - " << "(" << ingress << ", " << egress << ")...";
+            std::cout << "no eclipses - " << eclipses.size() << "...";
         }
 
         // Factor here is adjusted to equal 1 at its peak
