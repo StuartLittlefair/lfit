@@ -188,6 +188,7 @@ void LFIT::BrightSpot::setup_grid( const double& incl ){
     LFIT::Point::etype eclipses;
     std::cout << "setup_grid: initialisation done, looping over " << nspot << " elements" << std::endl;
 	for(int i=0; i<nspot; i++){
+        std::cout << "hey...";
         std::cout << "starting el " << i << "...";
         // spot position
 	    double dist = SFAC*i/(nspot-1);
