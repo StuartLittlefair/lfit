@@ -2,8 +2,9 @@ from __future__ import print_function
 from distutils.core import setup
 from Cython.Build import cythonize
 from distutils.extension import Extension
-import numpy 
+import numpy
 import os, sys
+import platform
 
 library_dirs = []
 include_dirs = ['./include']
@@ -17,18 +18,32 @@ else:
     sys.exit(-1)
 include_dirs.append(numpy.get_include())
 
-ext_modules = [
-    Extension("lfit",
-        ["lfit.pyx"],
-        include_dirs = include_dirs,
-        library_dirs = library_dirs,
-        libraries = ["subs","roche"]
-    )
-]
-    
+if platform.system() == 'Darwin':
+    ext_modules = [
+        Extension("lfit",
+            ["lfit.pyx"],
+            include_dirs = include_dirs,
+            library_dirs = library_dirs,
+            extra_compile_args=["-stdlib=libc++"],
+            extra_link_args=["-stdlib=libc++"],
+            language="c++",
+            libraries = ["subs","roche"]
+        )
+    ]
+else:
+    ext_modules = [
+        Extension("lfit",
+            ["lfit.pyx"],
+            include_dirs = include_dirs,
+            library_dirs = library_dirs,
+            language="c++",
+            libraries = ["subs","roche"]
+        )
+    ]
+
 setup(
     name = "lfit",
-    version="0.1",
+    version="0.15",
     description="Calculate and fit CV lightcurves",
     ext_modules = cythonize(ext_modules),
     url = "https://github.com/StuartLittlefair/lfit",
