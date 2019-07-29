@@ -186,26 +186,18 @@ void LFIT::BrightSpot::setup_grid( const double& incl ){
 	// setup point objects, including their ingress/egress phases
 	const double AREA   = SFAC*this->scale*this->scale/(nspot-1);
     LFIT::Point::etype eclipses;
-    std::cout << "setup_grid: initialisation done, looping over " << nspot << " elements" << std::endl;
 	for(int i=0; i<nspot; i++){
-        std::cout << "starting el " << i << "..." << std::flush;
         // spot position
 	    double dist = SFAC*i/(nspot-1);
 	    posn = bspot + this->scale*(dist-BMAX)*bvec;
-        std::cout << "pos " << posn << "..." << std::flush;
 
 	    // ingress, egress phases
 	    eclipses.clear();
         double ingress, egress;
-        std::cout << "eclipses cleared..." << std::flush;
 
-        // sometimes dies with linmin error: allow this to bubble up
-        std::cout << q << incl << std::flush;
-        if (Roche::ingress_egress(q, Roche::SECONDARY, 1.0, 1.0, incl, 1.0e-5, posn, ingress, egress)){
+        // sometimes dies with linmin error: allow this to bubble up (accuracy must be 1.0-e7 to avoid next line hanging indefinitely)
+        if (Roche::ingress_egress(q, Roche::SECONDARY, 1.0, 1.0, incl, 1.0e-7, posn, ingress, egress)){
             eclipses.push_back(std::make_pair(ingress,egress));
-            std::cout << "(" << ingress << ", " << egress << ")..." << std::flush;
-        }else{
-            std::cout << "no eclipses - " << eclipses.size() << "..." << std::flush;
         }
 
         // Factor here is adjusted to equal 1 at its peak
@@ -218,7 +210,6 @@ void LFIT::BrightSpot::setup_grid( const double& incl ){
         // the parallel strip
         this->spot[i+nspot]      = LFIT::Point(posn,pvec,AREA,eclipses);
         this->spot[i+nspot].flux = bright*this->frac*this->spot[i].area;
-        std::cout << "done element " << i << " of " << nspot << "!" << std::endl;
     }
 }
 
