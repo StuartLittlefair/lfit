@@ -192,7 +192,7 @@ void LFIT::BrightSpot::setup_grid( const double& incl ){
         // spot position
 	    double dist = SFAC*i/(nspot-1);
 	    posn = bspot + this->scale*(dist-BMAX)*bvec;
-        std::cout << "pos done...";
+        std::cout << "pos " << posn << "...";
 
 	    // ingress, egress phases
 	    eclipses.clear();
