@@ -218,7 +218,7 @@ void LFIT::BrightSpot::setup_grid( const double& incl ){
         // the parallel strip
         this->spot[i+nspot]      = LFIT::Point(posn,pvec,AREA,eclipses);
         this->spot[i+nspot].flux = bright*this->frac*this->spot[i].area;
-        std::cout << "done element " << i << " of " << nspot << std::endl;
+        std::cout << "done element " << i << " of " << nspot << "!" << std::endl;
         std::cout << "!";
     }
 }
