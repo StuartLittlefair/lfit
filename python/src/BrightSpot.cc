@@ -27,13 +27,13 @@ int LFIT::BrightSpot::getNspot(){
 }
 
 double LFIT::BrightSpot::calcFlux(const double& q, const double& phi, const double& width, const double& incl){
-    /* 
+    /*
      computes flux of bright spot relative to flux outside
      eclipse.
-     
+
      integrates over bin of finite phase width, width using trapezoidal int
      */
-    
+
     double phi1 = phi - width/2.0;
     double bflux=0.0;
     int nphi = 5;
@@ -47,7 +47,7 @@ double LFIT::BrightSpot::calcFlux(const double& q, const double& phi, const doub
         }
     }
     bflux /= double(nphi-1);
-    
+
     return bflux;
 }
 
@@ -73,7 +73,7 @@ double LFIT::BrightSpot::simpleFlux(const double& q,const double& phi, const dou
      * PHI    = Orbital phase
      * Q      = Mass ratio = M2/M1
      * INCL   = Inclination angle (degrees)
-     
+
      and from spot object itself we get
      * XS, YS, SCALE = position and scale of spot/RL1
      * frac    = Fraction of light which is isotropic.
@@ -84,7 +84,7 @@ double LFIT::BrightSpot::simpleFlux(const double& q,const double& phi, const dou
     const double acc=1.0e-3;
     const double tot=8.0;
     double bflux;
-    
+
     // compute some time saving variables
     Subs::Vec3 earth;
     earth=Roche::set_earth(incl,phi);
@@ -93,7 +93,7 @@ double LFIT::BrightSpot::simpleFlux(const double& q,const double& phi, const dou
     double raz  = Constants::TWOPI*this->az/360.0;
     double caz  = cos(raz);
     double saz  = sin(raz);
-    
+
     // ept is exponent in x**ept*exp(-x)
     // integration is carried out from x=0 to x=tot
 	double out = 2.0-(tot*(tot+2.0)+2.0)*exp(-tot);
@@ -104,7 +104,7 @@ double LFIT::BrightSpot::simpleFlux(const double& q,const double& phi, const dou
     double dx = tot*this->scale*caz;
     double dy = tot*this->scale*saz;
     double proj = std::max(0.0,saz*cphi+caz*sphi);
-    
+
     // are ends of element occulted?
     Subs::Vec3 x = Subs::Vec3(x1,y1,0.0);
     bool p1,p2;
@@ -159,19 +159,19 @@ void LFIT::BrightSpot::setup_grid( const double& incl ){
     if (!this->complex){
         return;
     }
-    
+
 	// NOT SIMPLE - shamelessly ripped off from Tom Marsh's LCURVE
 	double theta = Constants::TWOPI*this->az/360.0;
 	double alpha = Constants::TWOPI*this->yaw/360.0;
 	double tilt_spot  = Constants::TWOPI*this->tilt/360.0;
-	
+
 	// the direction of the bright spot line is set by az, but the beaming direction adds in yaw as well
 	Subs::Vec3 posn, bvec(cos(theta),sin(theta),0);
 	Subs::Vec3 pvec(0,0,1), tvec(sin(tilt_spot)*sin(theta+alpha), -sin(tilt_spot)*cos(theta+alpha), cos(tilt_spot));
-	
+
 	// position of bright spot
 	Subs::Vec3 bspot(this->x,this->y,0);
-	
+
 	// length of bright spt in scale lengths
 	const double BMAX = pow(this->exp1/this->exp2,1.0/this->exp2);
 	const double SFAC = 20.0 + BMAX;
@@ -182,33 +182,34 @@ void LFIT::BrightSpot::setup_grid( const double& incl ){
 	// create buffer of point objects
 	int nspot = this->nspot;
 	this->spot.resize(nspot*2);
-	
+
 	// setup point objects, including their ingress/egress phases
 	const double AREA   = SFAC*this->scale*this->scale/(nspot-1);
     LFIT::Point::etype eclipses;
-    
+    std::cout << "setup_grid: initialisation done, looping over " << nspot << " elements" << std::endl;
 	for(int i=0; i<nspot; i++){
+        std::cout << "starting el " << i << "...";
         // spot position
 	    double dist = SFAC*i/(nspot-1);
 	    posn = bspot + this->scale*(dist-BMAX)*bvec;
-	    
+        std::cout << "pos done...";
+
 	    // ingress, egress phases
 	    eclipses.clear();
         double ingress, egress;
-        
-        //try{
-            // sometimes dies with linmin error: assume this means no eclipse
+        std::cout << "eclipses cleared...";
+
+        // sometimes dies with linmin error: allow this to bubble up
         if (Roche::ingress_egress(q, Roche::SECONDARY, 1.0, 1.0, incl, 1.0e-5, posn, ingress, egress)){
             eclipses.push_back(std::make_pair(ingress,egress));
+            std::cout << "(" << ingress << ", " << egress << ")...";
+        }else{
+            std::cout << "no eclipses - " << "(" << ingress << ", " << egress << ")...";
         }
-        //}catch (Roche::Roche_Error) { 
-            /* do nothing here */
-        //    std::cout << "Roche error" << std::endl;  
-        //}
-    
+
         // Factor here is adjusted to equal 1 at its peak
         double bright = pow(dist/BMAX,this->exp1)*exp(this->exp1/this->exp2 - pow(dist,this->exp2));
-        
+
         // the tilted strip
         this->spot[i]      = LFIT::Point(posn,tvec,AREA,eclipses);
         this->spot[i].flux = bright*(1.0-this->frac)*this->spot[i].area;
@@ -216,14 +217,15 @@ void LFIT::BrightSpot::setup_grid( const double& incl ){
         // the parallel strip
         this->spot[i+nspot]      = LFIT::Point(posn,pvec,AREA,eclipses);
         this->spot[i+nspot].flux = bright*this->frac*this->spot[i].area;
-    } 
+        std::cout << "done element " << i << " of " << nspot << std::endl;
+    }
 }
 
 double LFIT::BrightSpot::calcFlux(const double& q,const double& phi, const double& incl){
-	
+
 	// SIMPLE: do old-style LFIT calculation with single bright spot strip hard-coded to exponent of 2
 	if (!this->complex){return LFIT::BrightSpot::simpleFlux(q,phi,incl);}
-	
+
     //  IS  CALLED WITH SPOT UNCALCULATED?
     if (this->spot.size() == 0){
         std::cout << "This shouldn't happen" <<std::endl;
@@ -236,7 +238,7 @@ double LFIT::BrightSpot::calcFlux(const double& q,const double& phi, const doubl
 	double tanMaxPhi = 1.0/tan(theta+alpha);
 	double MaxPhi = atan(tanMaxPhi)/Constants::PI/2.0; //lies between -1/2 and 1/2
 	if(MaxPhi < 0.0){MaxPhi = 1.0+MaxPhi;}
-	
+
 	// setup variables
 	Subs::Vec3 earthmax, earthact, tvec;
 	double mumax, muact, maxProj;
@@ -246,7 +248,7 @@ double LFIT::BrightSpot::calcFlux(const double& q,const double& phi, const doubl
 	// first element of spot is from tilted strip, so
 	tvec = this->spot[0].dirn;
 	maxProj = Subs::dot(tvec,earthmax);
-    
+
     if(this->normalisation < 0.0){
         for(int i=0; i<this->spot.size(); i++){
             mumax = Subs::dot(this->spot[i].dirn,earthmax);
@@ -259,28 +261,28 @@ double LFIT::BrightSpot::calcFlux(const double& q,const double& phi, const doubl
             }
         }
         this->normalisation = maxflux;
-    }    
-    
+    }
+
     for(int i=0; i<this->spot.size(); i++){
-        muact = Subs::dot(this->spot[i].dirn,earthact);   
-         
+        muact = Subs::dot(this->spot[i].dirn,earthact);
+
         if(i<nspot){
             // tilted strip
             if(muact > 0. && this->spot[i].visible(phi)) bflux += muact*this->spot[i].flux;
         }else{
             // parallel strip
-            if(muact > 0. && this->spot[i].visible(phi)) bflux += maxProj*this->spot[i].flux;            
+            if(muact > 0. && this->spot[i].visible(phi)) bflux += maxProj*this->spot[i].flux;
         }
 	}
 	return bflux/this->normalisation;
 }
 
 void LFIT::BrightSpot::spotPos(const double& q, const double& rd){
-    /*     
+    /*
      Determines location of bright-spot from mass ratio and radius
      of disc assuming that it is located on free-particle trajectory
      at edge of disc.
-     
+
      a = Mass ratio = M2/M2
      RD = radius of disc/XL1
      Calculates X,Y position of spot in units of XL1
@@ -288,7 +290,7 @@ void LFIT::BrightSpot::spotPos(const double& q, const double& rd){
 
     double xl1 = Roche::xl1(q);
     double rtest = rd*xl1;
-    
+
     Subs::Vec3 r,v;
     Roche::strinit(q,r,v);
     Roche::stradv(q,r,v,rtest,1.0e-10,1.0e-3);
