@@ -219,6 +219,7 @@ void LFIT::BrightSpot::setup_grid( const double& incl ){
         this->spot[i+nspot]      = LFIT::Point(posn,pvec,AREA,eclipses);
         this->spot[i+nspot].flux = bright*this->frac*this->spot[i].area;
         std::cout << "done element " << i << " of " << nspot << std::endl;
+        std::cout << "!";
     }
 }
 
