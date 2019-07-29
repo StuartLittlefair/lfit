@@ -200,6 +200,7 @@ void LFIT::BrightSpot::setup_grid( const double& incl ){
         std::cout << "eclipses cleared..." << std::flush;
 
         // sometimes dies with linmin error: allow this to bubble up
+        std::cout << q << incl << std::flush;
         if (Roche::ingress_egress(q, Roche::SECONDARY, 1.0, 1.0, incl, 1.0e-5, posn, ingress, egress)){
             eclipses.push_back(std::make_pair(ingress,egress));
             std::cout << "(" << ingress << ", " << egress << ")..." << std::flush;
