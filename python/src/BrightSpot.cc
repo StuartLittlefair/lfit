@@ -106,25 +106,36 @@ double LFIT::BrightSpot::simpleFlux(const double& q,const double& phi, const dou
     double proj = std::max(0.0,saz*cphi+caz*sphi);
 
     // are ends of element occulted?
+    bool p1,p2,p3;
+
     Subs::Vec3 x = Subs::Vec3(x1,y1,0.0);
-    bool p1,p2;
     if(Roche::blink(q,x,earth,0.05)){
         p1 = true;
     }else{
         p1 = false;
     }
-    x.set(x1+dx,y1+dy,0.0);
+
+    x.set(x1+(dx/2.0),y1+(dy/2.0),0.0);
     if(Roche::blink(q,x,earth,0.05)){
         p2 = true;
     }else{
         p2 = false;
     }
-    if(p1 && p2){
-        bflux = 0.0;
-    }else if(!p1 && !p2){
-        bflux = this->frac + (1.0-this->frac)*proj;
+
+    x.set(x1+dx,y1+dy,0.0);
+    if(Roche::blink(q,x,earth,0.05)){
+        p3 = true;
     }else{
+        p3 = false;
+    }
+
+    if(p1 && p2 && p3){
+        bflux = 0.0;
+    }else if(!p1 && !p2 && !p3){
+        bflux = this->frac + (1.0-this->frac)*proj;
+    }else if ((!p1 && !p2 && p3) or (p1 && !p2 && !p3)){
         double a, a1,a2;
+        // Find a, the fraction of the strip that is occulted
         // a1 is the occulted end
         if(p1){
             a1=0.0;
@@ -150,6 +161,48 @@ double LFIT::BrightSpot::simpleFlux(const double& q,const double& phi, const dou
             bflux=(this->frac+(1.0-this->frac)*proj)*(1.0-frac/out);
         }else{
             bflux=(this->frac+(1.0-this->frac)*proj)*frac/out;
+        }
+    }else{
+        // We need to calculate the above case twice, once from either edge,
+        // and sum their fluxes.
+        // i.e., we must evaluate it as if p1 = False, p2 = True, AND p2 = True, p1 = False
+        double a, a1,a2;
+        bflux = 0.0;
+
+        for (int counter=0; counter<2; counter++){
+            if (counter == 0){
+                // p1 is True, p2 is False case
+                a1=0.0;
+                a2=1.0;
+            }
+            else{
+                // p2 is True, p1 is False case
+                a1=1.0;
+                a2=0.0;
+            }
+
+            do {
+                a=(a1+a2)/2.0;
+                x.set(x1+a*dx,y1+a*dy,0.0);
+                if(Roche::blink(q,x,earth,0.05)){
+                    a1=a;
+                }else{
+                    a2=a;
+                }
+            } while(fabs(a2-a1) > acc);
+
+            a = tot*(a1+a2)/2.0;
+            double frac = 2.0-(a*(a+2.0)+2.0)*exp(-a);
+            if(ept==1) frac = 2.0*(1.0-exp(-a));
+            if(ept==3) frac = 3*frac - pow(a,3)*exp(-a);
+
+            if(counter == 0){
+                // p1 is True, p2 is False case
+                bflux+=(this->frac+(1.0-this->frac)*proj)*(1.0-frac/out);
+            }else{
+                // p2 is True, p1 is False case
+                bflux+=(this->frac+(1.0-this->frac)*proj)*frac/out;
+            }
         }
     }
     return bflux;
