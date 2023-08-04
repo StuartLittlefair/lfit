@@ -224,7 +224,7 @@ void LFIT::BrightSpot::setup_grid(const double &incl)
         curr_flux = pow(pos, this->exp1) * exp(-pow(pos, this->exp2));
     }
     // now calculate end position in scale lengths
-    const double SFAC = BMAX + pos;
+    const double SFAC = std::min(20 + BMAX, BMAX + pos);
 
     // the scaling of nspot below ensures we have at least 50 points between
     // start and maximum of BS
