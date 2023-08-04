@@ -7,12 +7,13 @@ import numpy as np
 from libcpp cimport bool
 from cython.operator cimport dereference as deref
 from trm import roche
+from matplotlib import pyplot as plt
 
-############## Donor #######################   
+############## Donor #######################
 cdef extern from "Donor.h" namespace "LFIT":
     cdef cppclass Donor:
-        Donor(double, int)
-        void tweak(double) 
+        Donor(double, int) except+
+        void tweak(double) except+
         double calcFlux(double,double) except+
         double calcFlux(double,double,double) except+
         void setup_grid(double) except+
@@ -20,7 +21,7 @@ cdef extern from "Donor.h" namespace "LFIT":
         void set_q(double)
         int get_size()
         void set_size(int)
-        
+
 def rebuild_PyDonor(q,size):
     return PyDonor(q,size)
 cdef class PyDonor:
@@ -32,11 +33,11 @@ cdef class PyDonor:
         def __set__(self,q): self.thisptr.set_q(q)
     property nel:
         def __get__(self): return self.thisptr.get_size()
-        def __set__(self,nel): self.thisptr.set_size(nel)      
+        def __set__(self,nel): self.thisptr.set_size(nel)
     def __dealloc__(self):
         del self.thisptr
     def __reduce__(self):
-        return (rebuild_PyDonor, (self.q, self.nel))        
+        return (rebuild_PyDonor, (self.q, self.nel))
     def tweak(self,double q):
         self.thisptr.tweak(q)
     def calcFlux(self, double q, double incl, np.ndarray[np.double_t, ndim=1] phi, np.ndarray[np.double_t, ndim=1] width=None):
@@ -56,17 +57,17 @@ cdef class PyDonor:
         else:
             for i in range(n):
                 out[i] = self.thisptr.calcFlux(phi[i],incl)
-        return out   
+        return out
 
-############## BS #######################                       
+############## BS #######################
 cdef extern from "BrightSpot.h" namespace "LFIT":
     cdef cppclass Params:
         double q,dphi,rd,rwd,ulimb,bsScale,bsAz,bsFrac,bsExp1,bsExp2,bsTilt,bsYaw,dExp,incl,dFlux,bFlux,wFlux,rFlux,phi0,complexSpot
 
 cdef extern from "BrightSpot.h" namespace "LFIT":
     cdef cppclass BrightSpot:
-        BrightSpot(Params)
-        void tweak(Params)
+        BrightSpot(Params) except+
+        void tweak(Params) except+
         void spotPos(double,double) except+# calculates x and y location of spot
         double calcFlux(double,double,double) except+
         double calcFlux(double,double,double,double) except+
@@ -92,8 +93,8 @@ cdef class PySpot:
         self.parptr.complexSpot = complex
         self.parptr.bsTilt = tilt
         self.parptr.bsYaw = yaw
-        self.thisptr = new BrightSpot(deref(self.parptr))  
-            
+        self.thisptr = new BrightSpot(deref(self.parptr))
+
     def tweak(self, double q, double rd, double az, double frac, double scale, bool complex=False,  double exp1=2.0, double exp2=1.0, double tilt=90.0, double yaw=1.0):
         self.parptr.q = q
         self.parptr.rd = rd
@@ -105,8 +106,8 @@ cdef class PySpot:
         self.parptr.complexSpot = complex
         self.parptr.bsTilt = tilt
         self.parptr.bsYaw = yaw
-        self.thisptr.tweak(deref(self.parptr))   
-        
+        self.thisptr.tweak(deref(self.parptr))
+
     def __reduce__(self):
         q = self.parptr.q
         rd = self.parptr.rd
@@ -119,21 +120,21 @@ cdef class PySpot:
         bsTilt = self.parptr.bsTilt
         bsYaw = self.parptr.bsYaw
         return (rebuild_PySpot, (q,rd,bsAz,bsFrac,bsScale,bsExp1,bsExp2,complexSpot,bsTilt,bsYaw))
-                   
+
     def __dealloc__(self):
         del self.thisptr
         del self.parptr
-        
+
     def getTangent(self):
         return self.thisptr.getTangent()
-        
+
     property nspot:
         def __get__(self):
             return self.thisptr.getNspot()
 
         def __set__(self,nelem):
             self.thisptr.setNspot(nelem)
-        
+
     def calcFlux(self, double q, double incl, np.ndarray[np.double_t, ndim=1] phi, np.ndarray[np.double_t, ndim=1] width=None):
         cdef unsigned n = phi.shape[0]
         cdef unsigned int i
@@ -151,8 +152,8 @@ cdef class PySpot:
             for i in range(n):
                 out[i] = self.thisptr.calcFlux(q,phi[i],incl)
         return out
-        
-############## DISC #######################   
+
+############## DISC #######################
 cdef extern from "Disc.h" namespace "LFIT":
     cdef cppclass Disc:
         Disc(double, double, double, double, int) except +
@@ -160,9 +161,9 @@ cdef extern from "Disc.h" namespace "LFIT":
         void setup_grid(double) except+
         double calcFlux(double, double, double) except+
         double calcFlux(double, double, double, double) except+
-        
+
 def rebuild_PyDisc(q,rin,rout,exp,nelem=1000):
-    return PyDisc(q,rin,rout,exp,nelem)    
+    return PyDisc(q,rin,rout,exp,nelem)
 cdef class PyDisc:
     cdef Disc *thisptr
     cdef double q, rin, rout, exp
@@ -200,8 +201,8 @@ cdef class PyDisc:
         self.q = q
         self.rin = rin
         self.exp = exp
-                 
-############## WD #######################   
+
+############## WD #######################
 cdef extern from "WhiteDwarf.h" namespace "LFIT":
     cdef cppclass WhiteDwarf:
         WhiteDwarf(double, double) except +
@@ -214,7 +215,7 @@ cdef extern from "WhiteDwarf.h" namespace "LFIT":
         void   set_ulimb(double)
 
 def rebuild_PyWhiteDwarf(radius,ulimb):
-    return PyWhiteDwarf(radius,ulimb)                
+    return PyWhiteDwarf(radius,ulimb)
 cdef class PyWhiteDwarf:
     cdef WhiteDwarf *thisptr    # hold a C++ instance which we wrap
     def __cinit__(self, double radius, double ulimb):
@@ -226,7 +227,7 @@ cdef class PyWhiteDwarf:
     def __dealloc__(self):
         del self.thisptr
     def tweak(self, double radius, double ulimb):
-        self.thisptr.tweak(radius, ulimb)  
+        self.thisptr.tweak(radius, ulimb)
     def calcFlux(self, double q, double incl, np.ndarray[np.double_t, ndim=1] phi, np.ndarray[np.double_t, ndim=1] width=None):
         cdef unsigned n = phi.shape[0]
         cdef unsigned int i
@@ -239,7 +240,7 @@ cdef class PyWhiteDwarf:
         else:
             for i in range(n):
                 out[i] = self.thisptr.calcFlux(q,phi[i],incl)
-        return out     
+        return out
     property radius:
         def __get__(self): return self.thisptr.get_radius()
         def __set__(self,radius): self.thisptr.set_radius(radius)
@@ -247,27 +248,27 @@ cdef class PyWhiteDwarf:
         def __get__(self): return self.thisptr.get_ulimb()
         def __set__(self,ulimb): self.thisptr.set_ulimb(ulimb)
 
-############## CV #######################   
+############## CV #######################
 class CV(object):
     '''A Wrapper object that holds a disc, donor, bright spot and white dwarf
        and provides convenient routines for calculating the total flux.
-       
+
        Access is provided to the underlying components for advanced use, but
        most users will only ever need to use the calcFlux method, and access
        the ywd, yd, ys and yrs properties which, when calculated provide arrays
-       of the white dwarf, disc, bright spot, and donor star fluxes respectively''' 
+       of the white dwarf, disc, bright spot, and donor star fluxes respectively'''
     def __init__(self,pars,nel_disc=1000,nel_donor=400):
         '''initialiser for CV object. The parameters argument is a tuple, array or
         list which contains either 14 parameters, or 18 parameters for more complicated
-        bright spot models. 
-        
+        bright spot models.
+
         The bright spot is modelled as a linear strip at an angle to the line of centres.
         A fraction of the bright spot strip radiates isotropically, whilst the remainder
         is beamed normal to the surface (in the simple model). In the more complex model
         the bright spot can be made to decay in brightness along it's length at different
         rates (by the two exponent parameters), and beam in a direction other than the normal
         to the direction (using the tilt and yaw parameters
-        
+
         The CV parameters are (in order):
         wdFlux -  white dwarf flux at maximum light
         dFlux  -  disc flux at maximum light
@@ -283,10 +284,10 @@ class CV(object):
         fis    -  the fraction of the bright spot's flux which radiates isotropically
         dexp   -  the exponent which governs how the brightness of the disc falls off with radius
         phi0   -  a phase offset
-        
+
         the next four parameters are only used for complex bright spot models
         exp1, exp2, tilt, yaw. Their use is described above.
-        
+
         The accretion disc and donor are broken into tiles covering their surface. You can
         override the defaults for these tiles by setting the nel_disc or nel_donor arguments.
         This can increase numerical accuracy at the expense of computing time'''
@@ -298,7 +299,7 @@ class CV(object):
             self.complex = True
         xl1 = roche.xl1(q)
         incl = roche.findi(q,dphi)
-        
+
         self.wd = PyWhiteDwarf(rwd,ulimb)
         self.disc = PyDisc(q,rwd,rdisc,dexp,nel_disc)
         if self.complex:
@@ -311,17 +312,17 @@ class CV(object):
         self.ys = None
         self.yrs = None
         self.computed = False
-        
+
     def calcFlux(self,pars,phi,width=None):
         '''tweaks the parameters and calculates the flux from the CV as a whole, and from the
            components of the CV.
-           
+
            the pars list is as described for creation of a CV, and you can switch between
            simple and complex bright spots on the fly just by providing different numbers
            of parameters.
-           
+
            the flux at the phases given in phi is calculated and returned. If the optional
-           width argument is provided, the flux is calculated in a bin of this width and the 
+           width argument is provided, the flux is calculated in a bin of this width and the
            average flux in this bin is returned'''
         assert (len(pars) == 18) or (len(pars) == 14)
         wdFlux,dFlux,sFlux,rsFlux,q,dphi,rdisc,ulimb,rwd,scale,az,fis,dexp,phi0 = pars[0:14]
@@ -329,12 +330,12 @@ class CV(object):
         if len(pars) > 14:
             exp1, exp2, tilt, yaw = pars[14:]
             self.complex = True
-            
+
         xl1 = roche.xl1(q)
         inc = roche.findi(q,dphi)
         if inc < 0:
-            raise Exception('invalid combination of q and dphi: %f %f' % (q, dphi))   
-            
+            raise Exception('invalid combination of q and dphi: %f %f' % (q, dphi))
+
         bsValid = True
         # check for valid BS parameters
         slop = 80.0
@@ -344,9 +345,9 @@ class CV(object):
             alpha = np.degrees(np.arctan2(y,x))
             # alpha is between -90 and 90. if negative spot lags disc ie alpha > 90
             if alpha < 0: alpha = 90-alpha
-            tangent = alpha + 90 # disc tangent    
-            
-            # azimuth must be between 0 and 178, and less than 80 degrees from 
+            tangent = alpha + 90 # disc tangent
+
+            # azimuth must be between 0 and 178, and less than 80 degrees from
             # disc tangent
             if (az < 0) or (az > 178) or (np.fabs(tangent-az) > slop):
                 raise Exception('invalid BS azimuth: %f' % az)
@@ -364,7 +365,51 @@ class CV(object):
         self.ywd = wdFlux*self.wd.calcFlux(q,inc,phi-phi0,width)
         self.yd  = dFlux*self.disc.calcFlux(q,inc,phi-phi0,width)
         self.ys  = sFlux*self.spot.calcFlux(q,inc,phi-phi0,width)
-        self.yrs = rsFlux*self.donor.calcFlux(q,inc,phi-phi0,width) 
+        self.yrs = rsFlux*self.donor.calcFlux(q,inc,phi-phi0,width)
         self.computed = True
-        
-        return self.ywd + self.yd + self.ys + self.yrs                       
+
+        return self.ywd + self.yd + self.ys + self.yrs
+
+    def plot(self, pars, phi=None):
+        assert (len(pars) == 18) or (len(pars) == 14)
+        wdFlux,dFlux,sFlux,rsFlux,q,dphi,rdisc,ulimb,rwd,scale,az,fis,dexp,phi0 = pars[0:14]
+        if len(pars) > 14:
+            exp1, exp2, tilt, yaw = pars[14:]
+
+        xl1 = roche.xl1(q)
+        incl = roche.findi(q,dphi)
+        if incl < 0:
+            raise Exception('invalid combination of q and dphi: %f %f' % (q, dphi))
+
+        xl1_a = roche.xl1(q)
+        x, y = roche.stream(q, 0.01)
+        x, y = roche.stream(q, 0.01)
+        plt.plot(x, y, ":")
+        x2, y2 = roche.streamr(q, rdisc * xl1_a, n=400)
+        plt.plot(x2, y2)
+        xd, yd = roche.lobe2(q)
+        plt.plot(xd, yd)
+        disc = plt.Circle((0, 0), xl1_a * rdisc, color="r", alpha=0.5)
+        plt.gca().add_patch(disc)
+        wd = plt.Circle((0, 0), xl1_a * rwd, color="b", alpha=0.5)
+        plt.gca().add_patch(wd)
+
+        spotx, spoty, _, _ = roche.bspot(q, rdisc * xl1_a)
+        BMAX = pow(exp1 / exp2, 1 / exp2)
+        spot_max = BMAX ** exp1 * np.exp(-(BMAX ** exp2))
+        for i in range(10000):
+            pos = BMAX * (i + 1) / 5
+            f = (pos ** exp1) * np.exp(-(pos ** exp2))
+            if spot_max / f > 1000:
+                break
+        SFAC = BMAX + pos
+        theta = az * 2 * np.pi / 360.0
+        steps = scale * (np.linspace(0, SFAC, 10) - BMAX)
+        spotx, spoty = spotx + steps * np.cos(theta), spoty + steps * np.sin(theta)
+        plt.plot(spotx, spoty)
+
+        if phi is not None:
+            xs, ys, mask = roche.shadow(q, incl, phi)
+            plt.fill(xs[mask], ys[mask], color="k", alpha=0.2)
+
+        plt.gca().set_aspect("equal")
