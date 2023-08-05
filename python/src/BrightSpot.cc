@@ -40,7 +40,7 @@ double LFIT::BrightSpot::calcFlux(const double &q, const double &phi, const doub
     double phi1 = phi - width / 2.0;
     double bflux = 0.0;
     int nphi = 5;
-    //#pragma omp parallel for reduction(+:bflux)
+    // #pragma omp parallel for reduction(+:bflux)
     for (int i = 0; i < nphi; i++)
     {
         double p = phi1 + width * double(i) / double(nphi - 1);
@@ -223,12 +223,16 @@ void LFIT::BrightSpot::setup_grid(const double &incl)
         pos += BMAX / 10.0;
         curr_flux = pow(pos, this->exp1) * exp(-pow(pos, this->exp2));
     }
-    // now calculate end position in scale lengths
+    // now calculate end position in scale lengths (limit of 20 scale lengths)
     const double SFAC = std::min(20 + BMAX, BMAX + pos);
 
     // the scaling of nspot below ensures we have at least 50 points between
     // start and maximum of BS
     this->nspot = std::max(200, int(50 * SFAC / BMAX));
+
+    // the above calc produces unreasonable spot sizes if BMAX is close to
+    // the start of the spot. Set max to spot size.
+    this->nspot = std::min(this->nspot, 1000);
 
     // create buffer of point objects
     int nspot = this->nspot;
