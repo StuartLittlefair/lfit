@@ -215,16 +215,20 @@ void LFIT::BrightSpot::setup_grid(const double &incl)
     const double BMAX = pow(this->exp1 / this->exp2, 1.0 / this->exp2);
     // find max flux of spot at this position
     double spot_max = pow(BMAX, this->exp1) * exp(-pow(BMAX, this->exp2));
+
+    // step2: find end of BS strip
     // our target flux is 1/1000th of this value
     double curr_flux = spot_max;
-    double pos = BMAX;
+    double ppos = BMAX;
     while (curr_flux > spot_max / 1000)
     {
-        pos += BMAX / 10.0;
-        curr_flux = pow(pos, this->exp1) * exp(-pow(pos, this->exp2));
+        ppos += BMAX / 10.0;
+        curr_flux = pow(ppos, this->exp1) * exp(-pow(ppos, this->exp2));
     }
-    // now calculate end position in scale lengths (limit of 20 scale lengths)
-    const double SFAC = std::min(20 + BMAX, BMAX + pos);
+
+    // now calculate end position in scale lengths
+    // (limit of 20 scale lengths past max or min)
+    const double SFAC = std::min(20 + BMAX, BMAX + ppos);
 
     // the scaling of nspot below ensures we have at least 50 points between
     // start and maximum of BS

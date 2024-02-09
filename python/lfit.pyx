@@ -7,7 +7,53 @@ import numpy as np
 from libcpp cimport bool
 from cython.operator cimport dereference as deref
 from trm import roche
+
 from matplotlib import pyplot as plt
+import matplotlib.collections as mcoll
+import matplotlib.path as mpath
+
+def colorline(
+    x, y, z=None, cmap=plt.get_cmap('seismic'), norm=plt.Normalize(0.0, 1.0),
+        linewidth=3, alpha=1.0):
+    """
+    http://nbviewer.ipython.org/github/dpsanders/matplotlib-examples/blob/master/colorline.ipynb
+    http://matplotlib.org/examples/pylab_examples/multicolored_line.html
+    Plot a colored line with coordinates x and y
+    Optionally specify colors in the array z
+    Optionally specify a colormap, a norm function and a line width
+    """
+
+    # Default colors equally spaced on [0,1]:
+    if z is None:
+        z = np.linspace(0.0, 1.0, len(x))
+
+    # Special case if a single number:
+    if not hasattr(z, "__iter__"):  # to check for numerical input -- this is a hack
+        z = np.array([z])
+
+    z = np.asarray(z)
+
+    segments = make_segments(x, y)
+    lc = mcoll.LineCollection(segments, array=z, cmap=cmap, norm=norm,
+                              linewidth=linewidth, alpha=alpha)
+
+    ax = plt.gca()
+    ax.add_collection(lc)
+
+    return lc
+
+
+def make_segments(x, y):
+    """
+    Create list of line segments from x and y coordinates, in the correct format
+    for LineCollection: an array of the form numlines x (points per line) x 2 (x
+    and y) array
+    """
+
+    points = np.array([x, y]).T.reshape(-1, 1, 2)
+    segments = np.concatenate([points[:-1], points[1:]], axis=1)
+    return segments
+
 
 ############## Donor #######################
 cdef extern from "Donor.h" namespace "LFIT":
@@ -396,17 +442,24 @@ class CV(object):
 
         spotx, spoty, _, _ = roche.bspot(q, rdisc * xl1_a)
         BMAX = pow(exp1 / exp2, 1 / exp2)
-        spot_max = BMAX ** exp1 * np.exp(-(BMAX ** exp2))
-        for i in range(10000):
-            pos = BMAX * (i + 1) / 5
-            f = (pos ** exp1) * np.exp(-(pos ** exp2))
-            if spot_max / f > 1000:
-                break
-        SFAC = BMAX + pos
+        spot_max = pow(BMAX, exp1) * np.exp(-pow(BMAX, exp2))
+        curr_flux = spot_max
+        ppos = BMAX
+        while curr_flux > spot_max / 1000:
+            ppos += BMAX / 10
+            curr_flux = pow(ppos, exp1) * np.exp(-pow(ppos, exp2))
+        
+        SFAC = min(20+BMAX, BMAX+ppos)
+
+        nspot = max(200, int(50 * SFAC / BMAX))
+        nspot = min(nspot, 1000)
+
         theta = az * 2 * np.pi / 360.0
-        steps = scale * (np.linspace(0, SFAC, 10) - BMAX)
+        steps = scale * np.linspace(0, SFAC, nspot)
+        u = steps/scale
         spotx, spoty = spotx + steps * np.cos(theta), spoty + steps * np.sin(theta)
-        plt.plot(spotx, spoty)
+        spot_flux =  u**exp1 * np.exp(-u**exp2) / spot_max
+        colorline(spotx, spoty, spot_flux, cmap=plt.get_cmap('copper'), linewidth=2)
 
         if phi is not None:
             xs, ys, mask = roche.shadow(q, incl, phi)
