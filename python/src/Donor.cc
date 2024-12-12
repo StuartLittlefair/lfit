@@ -49,32 +49,30 @@ void LFIT::Donor::setup_grid(const double &incl)
 
     // OK, let's make the roche surface
     int icount = -1;
-    int np, nmer;
-    Subs::Vec3 xHat = Subs::Vec3(1.0, 0.0, 0.0);
-    Subs::Vec3 yHat = Subs::Vec3(0.0, 1.0, 0.0);
-    np = int(sqrt(this->ntiles));
-    this->tiles.resize(this->ntiles);
+    // set the number of tiles (variable number of tiles per latitude)
+    this->set_size(this->nlat);
+    int nlat = this->nlat;
 
     // create tiles
     LFIT::Point::etype eclipses;
-    nmer = np;
-    double dphi = Constants::TWOPI / double(np);
-    double dtheta = Constants::PI / double(nmer);
+    double dtheta = Constants::PI / double(nlat);
     std::ofstream outfile;
     outfile.open("faces.txt");
 
-    for (int i = 0; i < nmer; ++i)
+    for (int i = 0; i < nlat; ++i)
     {
         // start at theta = 0, pointing to back of donor
-        double theta = Constants::PI * (i + 0.5) / double(nmer);
+        double theta = Constants::PI * (i + 0.5) / double(nlat);
         double sint = sin(theta);
         double cost = cos(theta);
 
-        for (int j = 0; j < np; ++j)
+        // variable number of tiles per latitude
+        int nphi = std::max(16, int(2 * Constants::PI * sint / dtheta));
+        double dphi = Constants::TWOPI / double(nphi);
+        for (int j = 0; j < nphi; ++j)
         {
             icount++;
-            // b points to surface of star at various angles
-            double phi = Constants::TWOPI * double(j) / double(np);
+            double phi = Constants::TWOPI * double(j) / double(nphi);
             double sinp = sin(phi);
             double cosp = cos(phi);
 

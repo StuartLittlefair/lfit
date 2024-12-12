@@ -66,24 +66,28 @@ cdef extern from "Donor.h" namespace "LFIT":
         double get_q()
         void set_q(double)
         int get_size()
+        int get_nlat()
         void set_size(int)
 
-def rebuild_PyDonor(q,size):
-    return PyDonor(q,size)
+def rebuild_PyDonor(q,nlat):
+    return PyDonor(q,nlat)
 cdef class PyDonor:
     cdef Donor *thisptr
-    def __cinit__(self,double q, int size):
-        self.thisptr = new Donor(q,size)
+    def __cinit__(self,double q, int nlat):
+        self.thisptr = new Donor(q, nlat)
     property q:
         def __get__(self): return self.thisptr.get_q()
         def __set__(self,q): self.thisptr.set_q(q)
+    property nlat:
+        def __get__(self): return self.thisptr.get_nlat()
+        def __set__(self, nlat):
+            self.thisptr.set_size(nlat)
     property nel:
         def __get__(self): return self.thisptr.get_size()
-        def __set__(self,nel): self.thisptr.set_size(nel)
     def __dealloc__(self):
         del self.thisptr
     def __reduce__(self):
-        return (rebuild_PyDonor, (self.q, self.nel))
+        return (rebuild_PyDonor, (self.q, self.nlat))
     def tweak(self,double q):
         self.thisptr.tweak(q)
     def calcFlux(self, double q, double incl, np.ndarray[np.double_t, ndim=1] phi, np.ndarray[np.double_t, ndim=1] width=None):
@@ -303,7 +307,7 @@ class CV(object):
        most users will only ever need to use the calcFlux method, and access
        the ywd, yd, ys and yrs properties which, when calculated provide arrays
        of the white dwarf, disc, bright spot, and donor star fluxes respectively'''
-    def __init__(self,pars,nel_disc=1000,nel_donor=400):
+    def __init__(self,pars,nel_disc=1000,nlat_donor=20):
         '''initialiser for CV object. The parameters argument is a tuple, array or
         list which contains either 14 parameters, or 18 parameters for more complicated
         bright spot models.
@@ -352,7 +356,7 @@ class CV(object):
             self.spot = PySpot(q,rdisc,az,fis,scale,exp1,exp2,tilt,yaw,self.complex)
         else:
             self.spot = PySpot(q,rdisc,az,fis,scale)
-        self.donor = PyDonor(q,nel_donor)
+        self.donor = PyDonor(q, nlat_donor)
         self.ywd = None
         self.yd = None
         self.ys = None

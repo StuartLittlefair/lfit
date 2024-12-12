@@ -1,10 +1,13 @@
 from __future__ import print_function
-from distutils.core import setup
-from Cython.Build import cythonize
-from distutils.extension import Extension
-import numpy
-import os, sys
+
+import os
 import platform
+import sys
+from distutils.core import setup
+from distutils.extension import Extension
+
+import numpy
+from Cython.Build import cythonize
 
 library_dirs = []
 include_dirs = ["./include"]

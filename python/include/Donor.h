@@ -4,6 +4,7 @@
 #include "trm/array1d.h"
 #include "trm/vec3.h"
 #include "trm/roche.h"
+#include "trm/constants.h"
 #include "Point.h"
 
 namespace LFIT
@@ -15,10 +16,10 @@ namespace LFIT
     public:
         //! Default constructor
         Donor() : tiles(), beta(0.08), gmin(), ulimb(0.5),
-                  q(1.0e30), ntiles(400), normalisation(-1.) {}
+                  q(1.0e30), nlat(20), normalisation(-1.) {}
         //! Constructor
         Donor(const double &q_, const size_t &size) : tiles(), beta(0.08),
-                                                      gmin(), ulimb(0.5), q(1.0e30), ntiles(size), normalisation(-1.)
+                                                      gmin(), ulimb(0.5), q(1.0e30), nlat(size), normalisation(-1.)
         {
             this->tweak(q_);
         }
@@ -36,14 +37,27 @@ namespace LFIT
         {
             this->tweak(q);
         }
+        int get_nlat()
+        {
+            return this->nlat;
+        }
         int get_size()
         {
             return this->tiles.size();
         }
-        void set_size(int size)
+        void set_size(int nlat)
         {
+            int size = 0;
+            double dtheta = Constants::PI / nlat;
+            for (int i = 0; i < nlat; i++)
+            {
+                double theta = Constants::PI * (i + 0.5) / nlat;
+                double dphi = dtheta / sin(theta);
+                int nface = std::max(16, int(2 * Constants::PI / dphi));
+                size += nface;
+            }
             this->tiles.resize(size);
-            this->ntiles = size;
+            this->nlat = nlat;
             this->tweak(this->q);
         }
 
@@ -53,7 +67,7 @@ namespace LFIT
         double gmin;
         double ulimb;
         double q;
-        int ntiles;
+        int nlat;
         double normalisation;
     };
 
