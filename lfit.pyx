@@ -1,8 +1,8 @@
 # cython: embedsignature=True
 # cython: boundscheck=False
 # distutils: language = c++
-# distutils: sources = [./src/WhiteDwarf.cc, ./src/Disc.cc, ./src/BrightSpot.cc, ./src/Donor.cc, ./src/finddeg.cc, ./src/Point.cc]
 cimport numpy as np
+np.import_array()
 import numpy as np
 from libcpp cimport bool
 from cython.operator cimport dereference as deref
@@ -11,6 +11,7 @@ from trm import roche
 from matplotlib import pyplot as plt
 import matplotlib.collections as mcoll
 import matplotlib.path as mpath
+
 
 def colorline(
     x, y, z=None, cmap=plt.get_cmap('seismic'), norm=plt.Normalize(0.0, 1.0),
