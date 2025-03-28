@@ -21,7 +21,7 @@ You will need to install the C++ libraries [cpp-subs](https://github.com/trmrsh/
 
 `LFIT` also depends on Cython, which can be installed by using pip:
 
-```python
+```
 pip install Cython
 ```
 
@@ -31,7 +31,9 @@ Finally, you will need an installation of `numpy`.
 
 Once the dependencies are sorted out, you will need to set the environment variable `TRM_SOFTWARE` to point to the location where `cpp-subs` and `cpp-roche` are installed. Make a clone of this git repository and then, from the repository, install using:
 
-  python -m pip install .
+```
+python -m pip install .
+```
 
 # Usage
 
