@@ -17,11 +17,13 @@ using the same underlying libraries and the same model for the bright spot.
 
 ## Dependencies
 
-You will need to install the C++ libraries (cpp-subs)[https://github.com/trmrsh/cpp-subs] and (cpp-roche)[https://github.com/trmrsh/cpp-roche]. You will also need to install the Python wrapper (trm-roche)[https://github.com/trmrsh/trm-roche].
+You will need to install the C++ libraries [cpp-subs](https://github.com/trmrsh/cpp-subs) and [cpp-roche](https://github.com/trmrsh/cpp-roche). You will also need to install the Python wrapper [trm-roche](https://github.com/trmrsh/trm-roche).
 
 `LFIT` also depends on Cython, which can be installed by using pip:
 
-  pip install Cython
+```python
+pip install Cython
+```
 
 Finally, you will need an installation of `numpy`. 
 
