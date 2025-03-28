@@ -37,7 +37,7 @@ python -m pip install .
 
 # Usage
 
-Example usage is provided in the `testCV.py` script. Typical usage is to create a `CV` object:
+Example usage is provided in the [testCV.py](testCV.py) script. Typical usage is to create a `CV` object:
 
 ```python
 import lfit
@@ -72,23 +72,24 @@ For a fuller description of the model parameters, see [Savoury (2011)](https://u
  In brief, the CV parameters are (in order):
 
 
-  wdFlux -  white dwarf flux at maximum light
-  dFlux  -  disc flux at maximum light
-  sFlux  -  bright spot flux at maximum light
-  rsFlux -  donor flux at maximum light
-  q      -  mass ratio
-  dphi   -  full width of white dwarf at mid ingress/egress
-  rdisc  -  radius of accretion disc (scaled by distance to inner lagrangian point XL1)
-  ulimb  -  linear limb darkening parameter for white dwarf
-  rwd    -  white dwarf radius (scaled to XL1)
-  scale  -  bright spot scale (scaled to XL1)
-  az     -  the azimuth of the bright spot strip (w.r.t to line of centres between stars)
-  fis    -  the fraction of the bright spot's flux which radiates isotropically
-  dexp   -  the exponent which governs how the brightness of the disc falls off with radius
-  phi0   -  a phase offset
+1.  wdFlux -  white dwarf flux at maximum light
+2.  dFlux  -  disc flux at maximum light
+3.  sFlux  -  bright spot flux at maximum light
+4.  rsFlux -  donor flux at maximum light
+5.  q      -  mass ratio
+6.  dphi   -  full width of white dwarf at mid ingress/egress
+7.  rdisc  -  radius of accretion disc (scaled by distance to inner lagrangian point XL1)
+8.  ulimb  -  linear limb darkening parameter for white dwarf
+9.  rwd    -  white dwarf radius (scaled to XL1)
+10.  scale  -  bright spot scale (scaled to XL1)
+11.  az     -  the azimuth of the bright spot strip (w.r.t to line of centres between stars)
+12.  fis    -  the fraction of the bright spot's flux which radiates isotropically
+13.  dexp   -  the exponent which governs how the brightness of the disc falls off with radius
+14.  phi0   -  a phase offset
 
 the next four parameters are only used for complex bright spot models
-  exp1 - the `Y` exponent in [Savoury (2011)](https://ui.adsabs.harvard.edu/abs/2011MNRAS.415.2025S/abstract), which governs how rapidly the bright spot flux increases with distance along the strip
-  exp2 - the `Z` exponent in [Savoury (2011)](https://ui.adsabs.harvard.edu/abs/2011MNRAS.415.2025S/abstract), which governs how rapidly the bright spot flux falls with distance along the strip.
-  tilt - a parameter that allows the bright spot strip to beam in a different direction than the perpendicular to the strip itself. The tilt sets the beaming angle w.r.t to the disc plane.`tilt=90` beams light in the plane of the disc.  
-  yaw - the bright spot yaw also affects the bright spot strip beaming angle. The yaw is added to the bright spot azimuth to set the beaming angle in the plane of the disc.
+
+15.  exp1 - the `Y` exponent in [Savoury (2011)](https://ui.adsabs.harvard.edu/abs/2011MNRAS.415.2025S/abstract), which governs how rapidly the bright spot flux increases with distance along the strip
+16.  exp2 - the `Z` exponent in [Savoury (2011)](https://ui.adsabs.harvard.edu/abs/2011MNRAS.415.2025S/abstract), which governs how rapidly the bright spot flux falls with distance along the strip.
+17.  tilt - a parameter that allows the bright spot strip to beam in a different direction than the perpendicular to the strip itself. The tilt sets the beaming angle w.r.t to the disc plane.`tilt=90` beams light in the plane of the disc.  
+18.  yaw - the bright spot yaw also affects the bright spot strip beaming angle. The yaw is added to the bright spot azimuth to set the beaming angle in the plane of the disc.
